@@ -1,0 +1,23 @@
+{
+  "name": "Capacitor Production Hub",
+  "short_name": "CapHub",
+  "description": "Precision winding and potting calculator for manufacturing.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#14130f",
+  "theme_color": "#14130f",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "https://i.postimg.cc/7ZqG3fCq/Cap-Formula.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "https://i.postimg.cc/7ZqG3fCq/Cap-Formula.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
