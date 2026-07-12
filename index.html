@@ -1,0 +1,2252 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Capacitor Production Hub</title>
+    <meta name="theme-color" content="#14130F">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="https://i.postimg.cc/7ZqG3fCq/Cap-Formula.png">
+    
+    <!-- Space Grotesk (display) / Inter (body) / JetBrains Mono (numeric readouts) -->
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* THEME VARIABLES */
+        :root {
+            --ease: cubic-bezier(.4,0,.2,1); --spring: cubic-bezier(.34,1.56,.64,1);
+            --sidebar-w: 240px; --hdr-h: 64px;
+            --font-main: 'Inter', -apple-system, sans-serif;
+            --font-head: 'Space Grotesk', 'Inter', sans-serif;
+            --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', monospace;
+        }
+
+        [data-theme="dark"] {
+            --bg: #14130f; --surface: rgba(28, 25, 19, 0.75); --border: rgba(230, 210, 180, 0.10);
+            --text: #f2ecdd; --muted: #9b9182; --dim: #5c564a;
+            --accent: #d68a3c; --accent-hover: #e29a4e; --accent-bg: rgba(214, 138, 60, 0.12);
+            --input-bg: rgba(10, 9, 6, 0.45); --input-border: rgba(230, 210, 180, 0.14);
+            --card-bg: rgba(28, 25, 19, 0.6); --shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            --table-header: rgba(0, 0, 0, 0.35); --table-border: rgba(230, 210, 180, 0.06);
+            --success: #5eb88a; --warning: #c1653d; --danger: #d9553e; --purple: #3b8c8c;
+            --flat: #5b7c99; --matrix: #9c7a4a; --alt: #c9902e;
+            --read-only: rgba(230, 210, 180, 0.03);
+            --output-bg: rgba(230, 210, 180, 0.02);
+        }
+
+        [data-theme="light"] {
+            --bg: #f6f1e7; --surface: #fffdf8; --border: #e4dac8;
+            --text: #241f16; --muted: #6b6255; --dim: #a79c89;
+            --accent: #b36a1f; --accent-hover: #9a5a18; --accent-bg: #f3e4cf;
+            --input-bg: #fffcf5; --input-border: #d8cbae;
+            --card-bg: #ffffff; --shadow: 0 4px 6px -1px rgba(60,45,20,0.08), 0 2px 4px -1px rgba(60,45,20,0.05);
+            --table-header: #efe6d4; --table-border: #ded1b8;
+            --success: #3e8a63; --warning: #a5501f; --danger: #b8402c; --purple: #2c6e6e;
+            --flat: #3f5b73; --matrix: #7a5c34; --alt: #a3701a;
+            --read-only: #f2ebdc;
+            --output-bg: #faf5ea;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: var(--font-main); background: var(--bg); color: var(--text); height: 100dvh; width: 100vw; overflow: hidden; display: flex; flex-direction: column; transition: background 0.3s var(--ease), color 0.3s var(--ease); }
+        
+        [data-theme="dark"] body::before { content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 0; background: radial-gradient(ellipse 80% 50% at 50% -20%, rgba(214,138,60,.05) 0%, transparent 70%); }
+
+        /* HEADER */
+        .hdr { display: flex; justify-content: space-between; align-items: center; padding: 0 24px; border-bottom: 1px solid var(--border); background: var(--surface); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); height: var(--hdr-h); flex-shrink: 0; flex-wrap: nowrap; z-index: 100; }
+        .hdr-l { display: flex; align-items: center; gap: 12px; min-width: 0; overflow: hidden; }
+        .hdr-l img { width: 36px; height: 36px; border-radius: 10px; box-shadow: 0 0 15px var(--accent-bg); flex-shrink: 0; }
+        .hdr-l h1 { font-family: var(--font-head); font-size: 20px; font-weight: 800; letter-spacing: -0.5px; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .hdr-l p { font-size: 12px; color: var(--muted); font-weight: 500; display: none; white-space: nowrap; }
+        @media (min-width: 600px) { .hdr-l p { display: block; margin-left: 8px; padding-left: 12px; border-left: 1px solid var(--border); } }
+        .hdr-r { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+        
+        .icon-btn { background: transparent; border: 1px solid var(--border); color: var(--muted); border-radius: 10px; width: 40px; height: 40px; flex-shrink: 0; display: flex; justify-content: center; align-items: center; cursor: pointer; transition: 0.2s var(--ease); }
+        .icon-btn:hover { color: var(--accent); border-color: var(--accent); background: var(--accent-bg); }
+
+        /* LAYOUT */
+        .app-body { display: flex; flex: 1; overflow: hidden; position: relative; z-index: 1; }
+        
+        /* SIDEBAR (Desktop) */
+        #sidebar { display: none; width: var(--sidebar-w); flex-shrink: 0; flex-direction: column; border-right: 1px solid var(--border); padding: 24px 16px; overflow-y: auto; background: var(--surface); backdrop-filter: blur(20px); gap: 8px; }
+        .sb-item { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 12px; cursor: pointer; color: var(--muted); transition: all 0.2s var(--ease); font-size: 14px; font-weight: 600; }
+        .sb-item svg { width: 20px; height: 20px; }
+        .sb-item:hover { color: var(--text); background: rgba(150, 150, 150, 0.05); }
+        .sb-item.on { color: var(--accent); background: var(--accent-bg); border: 1px solid var(--accent-bg); }
+
+        /* MAIN SCROLL AREA */
+        .main-scroll { flex: 1; overflow-y: auto; scroll-behavior: smooth; padding-bottom: calc(var(--nav-height) + 40px); }
+        .container { max-width: 1200px; margin: 0 auto; padding: 24px 16px; display: grid; grid-template-columns: 1fr; gap: 20px; }
+        @media (min-width: 1024px) { .container { grid-template-columns: 1fr 1fr; padding: 32px 40px; gap: 24px;} .full-width { grid-column: span 2; } #sidebar { display: flex; } .main-scroll { padding-bottom: 40px; } }
+
+        /* BOTTOM NAV (Mobile) */
+        #bnav { display: flex; position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); width: 94%; max-width: 450px; background: var(--surface); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); border: 1px solid var(--border); border-radius: 24px; padding: 8px 6px; justify-content: space-around; z-index: 1000; box-shadow: var(--shadow); overflow-x: auto; -ms-overflow-style: none; scrollbar-width: none; }
+        #bnav::-webkit-scrollbar { display: none; }
+        .ni { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 8px 12px; border-radius: 16px; cursor: pointer; color: var(--muted); transition: all 0.2s var(--ease); min-width: 70px; }
+        .ni svg { width: 22px; height: 22px; }
+        .ni span { font-size: 10px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; }
+        .ni.on { color: var(--accent); background: var(--accent-bg); }
+        @media (min-width: 1024px) { #bnav { display: none; } }
+
+        /* VIEWS & CARDS */
+        .view { display: none; opacity: 0; animation: fadeUp 0.35s var(--ease) forwards; }
+        .view.on { display: block; }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .view.on .card { animation: cardIn 0.4s var(--ease) backwards; }
+        .view.on .card:nth-of-type(2) { animation-delay: 0.05s; }
+        .view.on .card:nth-of-type(3) { animation-delay: 0.1s; }
+        @keyframes cardIn { from { opacity: 0; transform: translateY(8px) scale(0.99); } to { opacity: 1; transform: translateY(0) scale(1); } }
+        .card:hover { box-shadow: var(--shadow), 0 0 0 1px var(--border); }
+        @keyframes valuePulse { 0% { color: var(--accent); } 100% { color: var(--text); } }
+        .value-pulse { animation: valuePulse 0.8s var(--ease); }
+        .can-fit-badge.value-pulse { animation: badgePulse 0.6s var(--ease); }
+        @keyframes badgePulse { 0% { transform: scale(1.12); } 100% { transform: scale(1); } }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+        }
+
+        .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 20px; padding: 24px; box-shadow: var(--shadow); backdrop-filter: blur(16px); position: relative; overflow: hidden; transition: border-color 0.3s var(--ease), transform 0.25s var(--ease), box-shadow 0.25s var(--ease); }
+        .card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--accent); }
+        .card.potting::before { background: var(--success); }
+        .card.dcw-card::before { background: var(--warning); }
+        .card.tcw-card::before { background: var(--purple); }
+        .card.flat-card::before { background: var(--flat); }
+        .card.matrix-card::before { background: var(--matrix); }
+        .card.alt-card::before { background: var(--alt); }
+
+        .card-title { font-family: var(--font-head); font-size: 19px; font-weight: 700; margin-bottom: 20px; color: var(--text); display: flex; justify-content: space-between; align-items: center; letter-spacing: -0.2px;}
+        
+        /* FORMS & INPUTS */
+        .input-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+        .input-group { display: flex; flex-direction: column; }
+        .input-group.full { grid-column: span 2; }
+        label { font-size: 10.5px; font-weight: 700; margin-bottom: 6px; color: var(--dim); text-transform: uppercase; letter-spacing: 0.9px; font-family: var(--font-main); }
+        input, select { width: 100%; padding: 12px 16px; font-size: 15px; font-family: var(--font-mono); font-weight: 500; font-variant-numeric: tabular-nums; background: var(--input-bg); border: 1px solid var(--input-border); border-radius: 10px; color: var(--text); transition: all 0.2s var(--ease); outline: none; }
+        select { font-family: var(--font-main); font-weight: 600; }
+        input::placeholder { color: var(--muted); opacity: 0.7; font-weight: 500; }
+        input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-bg); background: var(--surface); }
+        .readonly-field { background: var(--read-only) !important; border-color: transparent !important; color: var(--muted); pointer-events: none; }
+
+        /* BUTTONS */
+        .btn-row { display: flex; gap: 12px; margin-bottom: 16px; }
+        .btn { flex: 1; padding: 14px; font-family: var(--font-main); font-size: 13px; font-weight: 700; color: #fff; border: none; border-radius: 10px; cursor: pointer; transition: transform 0.15s var(--spring), box-shadow 0.2s var(--ease), background 0.2s var(--ease); text-transform: uppercase; letter-spacing: 0.8px;}
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 8px 20px var(--accent-bg); }
+        .btn:active { transform: translateY(1px) scale(0.98); }
+        .btn-primary { background: var(--accent); color: #1a1206; box-shadow: 0 4px 15px var(--accent-bg); }
+        [data-theme="light"] .btn-primary { color: #fff; }
+        .btn-potting { background: var(--success); box-shadow: 0 4px 15px rgba(94, 184, 138, 0.2); }
+        .btn-dcw { background: var(--warning); color: #fff; box-shadow: 0 4px 15px rgba(193, 101, 61, 0.25); }
+        .btn-tcw { background: var(--purple); box-shadow: 0 4px 15px rgba(59, 140, 140, 0.25); }
+        .btn-flat { background: var(--flat); box-shadow: 0 4px 15px rgba(91, 124, 153, 0.25); }
+        .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
+        .btn-outline:hover { border-color: var(--muted); box-shadow: none; background: var(--accent-bg); }
+        .btn-alt { background: var(--alt); margin-bottom: 16px; width: 100%; box-shadow: 0 4px 15px rgba(201, 144, 46, 0.2);} .btn-alt:hover { background: var(--alt); filter: brightness(1.1); }
+        
+        .btn-matrix { background: var(--matrix); } .btn-matrix:hover { filter: brightness(1.12); }
+        .btn-matrix-add { background: var(--input-bg); color: var(--text); border: 2px dashed var(--dim); box-shadow: none;} .btn-matrix-add:hover { background: var(--accent-bg); color: var(--accent); border-color: var(--accent); }
+
+        /* RESULTS AREA */
+        .results { background: rgba(0,0,0,0.18); border: 1px solid var(--border); border-radius: 14px; padding: 20px; }
+        [data-theme="light"] .results { background: var(--read-only); }
+        .results-header { font-size: 10.5px; font-weight: 800; color: var(--dim); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1.1px; border-bottom: 1px solid var(--border); padding-bottom: 8px;}
+        .result-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px dashed var(--border); }
+        .result-row:last-child { border-bottom: none; }
+        .result-label { color: var(--muted); font-size: 13.5px; font-weight: 500; font-family: var(--font-main); }
+        .result-val { font-family: var(--font-mono); font-weight: 600; font-variant-numeric: tabular-nums; color: var(--text); font-size: 15px; text-align: right; transition: color 0.2s var(--ease); }
+        
+        .highlight-val { color: var(--accent); font-size: 17px; }
+        .potting-val { color: var(--success); font-size: 17px; }
+        .alt-highlight { color: var(--alt); font-size: 18px; }
+        .dcw-highlight { color: var(--warning); font-size: 16px; }
+        .tcw-highlight { color: var(--purple); font-size: 15px; }
+        .flat-highlight { color: var(--flat); font-size: 16px; }
+
+        .recipe-box { background: rgba(94, 184, 138, 0.06); border: 1px solid rgba(94, 184, 138, 0.2); padding: 16px; border-radius: 12px; margin-top: 16px; }
+        .recipe-row { display: flex; justify-content: space-between; font-weight: 700; color: var(--success); font-size: 15px; margin-bottom: 8px;}
+
+        /* WINDING CROSS-SECTION DIAGRAM */
+        .winding-diagram-wrap { background: var(--output-bg); border: 1px solid var(--border); border-radius: 16px; padding: 16px; margin-bottom: 20px; }
+        .wd-eyebrow { font-size: 10.5px; font-weight: 700; color: var(--dim); text-transform: uppercase; letter-spacing: 1.2px; margin-bottom: 8px; font-family: var(--font-main); }
+        .winding-svg { width: 100%; height: auto; display: block; max-height: 220px; }
+        .winding-svg circle, .winding-svg line, .winding-svg text { transition: all 0.4s var(--ease); }
+        .wd-stats { display: flex; justify-content: space-around; margin-top: 10px; padding-top: 12px; border-top: 1px dashed var(--border); }
+        .wd-stats div { text-align: center; }
+        .wd-stats span { display: block; font-family: var(--font-mono); font-weight: 700; font-size: 15px; color: var(--accent); font-variant-numeric: tabular-nums; }
+        .wd-stats label { font-size: 9.5px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; margin-top: 2px; }
+
+        /* TOGGLE GROUP (TCW) */
+        .top-toggle-container { max-width: 600px; margin: 0 auto 1.5rem auto; padding: 0 1rem; }
+        .toggle-group { display: flex; background: rgba(0,0,0,0.3); border: 1px solid var(--border); border-radius: 12px; padding: 4px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05); }
+        [data-theme="light"] .toggle-group { background: var(--border); }
+        .toggle-btn { flex: 1; text-align: center; padding: 10px; font-weight: 700; color: var(--muted); cursor: pointer; border-radius: 8px; transition: 0.2s var(--ease); font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px;}
+        .toggle-btn.active { background: var(--surface); color: var(--purple); box-shadow: var(--shadow); border: 1px solid var(--border);}
+        .tcw-view { display: none; animation: fadeIn 0.3s ease; }
+        .tcw-view.active { display: block; }
+
+        /* MATRIX SPREADSHEET */
+        .table-container { overflow-x: auto; border: 1px solid var(--border); border-radius: 12px; margin-top: 16px; background: rgba(0,0,0,0.2);}
+        [data-theme="light"] .table-container { background: #fff; }
+        .matrix-table { width: 100%; border-collapse: collapse; min-width: 1500px; }
+        .matrix-table th { background: var(--table-header); padding: 14px 8px; text-align: center; font-size: 11px; font-weight: 800; color: var(--text); border-bottom: 1px solid var(--border); border-right: 1px solid var(--table-border); text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap;}
+        .matrix-table th.out-head { background: var(--accent-bg); color: var(--accent); }
+        .matrix-table td { padding: 4px; border: 1px solid var(--table-border); }
+        .matrix-table td.in-cell { background-color: var(--input-bg); }
+        .matrix-table td.out-cell { background-color: var(--output-bg); }
+        .matrix-table input { width: 100%; min-width: 75px; border: 1px solid transparent; border-radius: 6px; padding: 10px 4px; font-size: 14px; background: transparent; text-align: center;}
+        .matrix-table input.in-val:focus { background: var(--surface); border-color: var(--accent); box-shadow: none;}
+        .matrix-table input.out-val { color: var(--accent); font-weight: 600; font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: 14px;}
+        #libraryTable td { padding: 12px 10px; text-align: center; font-size: 13px; font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+        #libraryTable td:first-child { text-align: left; font-weight: 700; }
+        #libraryTable tbody tr:hover { background: var(--input-bg); }
+        #libraryTable thead th { font-family: var(--font-main); }
+
+        /* CAN-FIT CHECK */
+        .can-fit-badge { display: inline-block; padding: 6px 16px; border-radius: 20px; font-weight: 800; font-size: 13px; letter-spacing: 0.5px; background: var(--input-bg); color: var(--muted); }
+        .can-fit-badge.fit-yes { background: rgba(16,185,129,0.15); color: var(--success); }
+        .can-fit-badge.fit-no { background: rgba(239,68,68,0.15); color: var(--danger); }
+
+        /* INPUT VALIDATION */
+        input.invalid { border-color: var(--danger) !important; box-shadow: 0 0 0 3px rgba(239,68,68,0.15) !important; }
+
+        /* DIAGNOSTICS / SELF-TEST MODAL */
+        #diag-overlay, #hist-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index: 2000; align-items: center; justify-content: center; padding: 20px; }
+        #diag-overlay.on, #hist-overlay.on { display: flex; animation: overlayIn 0.2s var(--ease); }
+        @keyframes overlayIn { from { opacity: 0; } to { opacity: 1; } }
+        .diag-modal { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; max-width: 720px; width: 100%; max-height: 85vh; display: flex; flex-direction: column; box-shadow: var(--shadow); animation: modalIn 0.25s var(--spring); }
+        @keyframes modalIn { from { opacity: 0; transform: scale(0.96) translateY(8px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+        .diag-head { display: flex; justify-content: space-between; align-items: center; padding: 20px 24px; border-bottom: 1px solid var(--border); }
+        .diag-head h3 { font-family: var(--font-head); font-size: 18px; font-weight: 700; margin: 0; }
+        .diag-summary { font-size: 13px; color: var(--muted); margin-top: 2px; }
+        .diag-body { overflow-y: auto; padding: 16px 24px; }
+        .diag-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+        .diag-row:last-child { border-bottom: none; }
+        .diag-name { color: var(--text); font-weight: 600; flex: 1; }
+        .diag-vals { color: var(--muted); font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: 12px; text-align: right; }
+        .diag-badge { font-weight: 800; font-size: 11px; padding: 4px 10px; border-radius: 20px; letter-spacing: .5px; flex-shrink: 0; font-family: var(--font-main); }
+        .diag-badge.pass { background: rgba(94,184,138,0.15); color: var(--success); }
+        .diag-badge.fail { background: rgba(217,85,62,0.15); color: var(--danger); }
+        .diag-footer { padding: 16px 24px; border-top: 1px solid var(--border); text-align: right; }
+
+        /* PRINT STYLES */
+        #print-area { display: none; }
+        @media print {
+            @page { size: A4 portrait; margin: 10mm 11mm; }
+            html, body { height: auto !important; }
+            body * { visibility: hidden; }
+            #print-area, #print-area * { visibility: visible; }
+            #print-area { display: block; position: absolute; left: 0; top: 0; width: 100%; background: #ffffff !important; color: #1a1410 !important; padding: 0; font-size: 11px; line-height: 1.25; }
+
+            .pt-letterhead { display: flex; justify-content: space-between; align-items: center; border-bottom: 2.5px solid #b8752f; padding-bottom: 8px; margin-bottom: 2px; }
+            .pt-brand { display: flex; align-items: center; gap: 8px; }
+            .pt-brand img { width: 30px; height: 30px; border-radius: 6px; }
+            .pt-brand-name { font-size: 15px; font-weight: 800; letter-spacing: -0.3px; line-height: 1.1; }
+            .pt-brand-tag { font-size: 8.5px; color: #6b6255; text-transform: uppercase; letter-spacing: .8px; }
+            .pt-idbox { text-align: right; font-size: 9px; color: #443c30; line-height: 1.4; }
+            .pt-idbox b { color: #1a1410; font-family: 'Courier New', monospace; }
+
+            .pt-title-row { display: flex; justify-content: space-between; align-items: flex-end; margin: 8px 0 6px 0; }
+            .pt-title-row .pt-ttl { font-size: 14.5px; font-weight: 800; }
+            .pt-title-row .pt-sub { font-size: 9px; color: #6b6255; margin-top: 1px; }
+
+            .pt-grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; align-items: start; }
+
+            .pt-table { width: 100%; border-collapse: collapse; margin-top: 6px; font-size: 9.8px; }
+            .pt-table th, .pt-table td { border: 1px solid #c9bfa8; padding: 2.5px 6px; text-align: left; line-height: 1.2; }
+            .pt-table th { background-color: #f0e9da !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; color: #1a1410; font-weight: bold;}
+            .pt-section { font-size: 9.5px; font-weight: 800; text-transform: uppercase; letter-spacing: .4px; margin: 6px 0 0 0; padding: 3px 8px; -webkit-print-color-adjust: exact; print-color-adjust: exact; border: 1px solid #c9bfa8; border-bottom: none; border-radius: 4px 4px 0 0; }
+            .pt-input-hdr { background: #e4d3b8 !important; color: #4a3418 !important; }
+            .pt-output-hdr { background: #e8c9b8 !important; color: #5c2c14 !important; }
+            .pt-final-hdr { background: #cfe0cd !important; color: #234a1f !important; }
+            .pt-table.pt-sec-body { margin-top: 0; border-radius: 0 0 4px 4px; overflow: hidden; }
+            .pt-table td.pt-key { font-weight: 600; width: 58%; color: #443c30; }
+            .pt-table td.pt-hl { font-weight: bold; background: #fbeecb !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .pt-meta { font-size: 10px; color: #443c30; margin-bottom: 3px; }
+            .pt-blank { color: #999; font-style: italic; }
+
+            .pt-diagram-panel { display: flex; align-items: center; gap: 12px; border: 1px solid #c9bfa8; border-radius: 6px; padding: 6px 12px; margin-top: 6px; background: #faf6ec !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .pt-diagram-panel svg { width: 78px; height: 62px; flex-shrink: 0; }
+            .pt-diagram-stats { display: flex; gap: 16px; flex-wrap: wrap; }
+            .pt-diagram-stats div { text-align: left; }
+            .pt-diagram-stats span { display: block; font-family: 'Courier New', monospace; font-weight: 700; font-size: 11.5px; color: #8a4f1e; }
+            .pt-diagram-stats label { font-size: 7.5px; color: #6b6255; text-transform: uppercase; letter-spacing: .4px; }
+
+            .pt-signoff { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-top: 16px; padding-top: 2px; }
+            .pt-signoff div { border-top: 1px solid #443c30; padding-top: 4px; font-size: 8.5px; color: #6b6255; text-transform: uppercase; letter-spacing: .4px; }
+            .pt-signoff div span { display: block; height: 18px; }
+
+            .pt-footer-note { margin-top: 8px; font-size: 7.5px; color: #9b9182; text-align: center; border-top: 1px dashed #c9bfa8; padding-top: 5px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- HEADER -->
+    <div class="hdr">
+        <div class="hdr-l">
+            <img src="https://i.postimg.cc/7ZqG3fCq/Cap-Formula.png" alt="Logo">
+            <div>
+                <h1 id="appTitle">Cap Formula</h1>
+                <p id="appSubtitle">Winding & Potting Calculator</p>
+            </div>
+        </div>
+        <div class="hdr-r">
+            <button class="icon-btn" onclick="openHistory()" title="Calculation History">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><path d="M3 3v5h5"></path><path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"></path><path d="M12 7v5l4 2"></path></svg>
+            </button>
+            <button class="icon-btn" onclick="openDiagnostics()" title="Engine Self-Test">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+            </button>
+            <button class="icon-btn" onclick="toggleTheme()" title="Toggle Theme" id="theme-toggle">
+                <svg id="moon-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+                <svg id="sun-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20" style="display:none;"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+            </button>
+        </div>
+    </div>
+
+    <div class="app-body">
+        <!-- DESKTOP SIDEBAR -->
+        <aside id="sidebar">
+            <div class="sb-item on" id="sb-formula" onclick="navTo('formula')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path><path d="M22 12A10 10 0 0 0 12 2v10z"></path></svg>
+                <span>Cap Formula</span>
+            </div>
+            <div class="sb-item" id="sb-kvar" onclick="navTo('kvar')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                <span>kVAr Integrator</span>
+            </div>
+            <div class="sb-item" id="sb-dcw" onclick="navTo('dcw')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle></svg>
+                <span>DCW Module</span>
+            </div>
+            <div class="sb-item" id="sb-tcw" onclick="navTo('tcw')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path><path d="M2 12h20"></path></svg>
+                <span>TCW Module</span>
+            </div>
+            <div class="sb-item" id="sb-flat" onclick="navTo('flat')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+                <span>Flat Elements</span>
+            </div>
+            <div class="sb-item" id="sb-matrix" onclick="navTo('matrix')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="3" y1="15" x2="21" y2="15"></line><line x1="9" y1="3" x2="9" y2="21"></line><line x1="15" y1="3" x2="15" y2="21"></line></svg>
+                <span>Formula Matrix</span>
+            </div>
+            <div class="sb-item" id="sb-library" onclick="navTo('library')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+                <span>Product Library</span>
+            </div>
+        </aside>
+
+        <!-- MAIN SCROLL AREA -->
+        <div class="main-scroll">
+            
+            <!-- VIEW 1: CAP FORMULA -->
+            <div id="view-formula" class="view on">
+                <div class="container">
+                    <div class="card">
+                        <div class="card-title">Winding Parameters</div>
+                        <div class="input-grid">
+                            <div class="input-group"><label>Target MFD</label><input type="number" id="m1_mfd" placeholder="e.g. 5" step="0.1" oninput="calculateM1()"></div>
+                            <div class="input-group"><label>Pos Tol %</label><input type="number" id="m1_posTol" placeholder="e.g. 0" step="0.1" oninput="calculateM1()"></div>
+                            <div class="input-group full"><label>Fin. MFD</label><input type="number" id="m1_finMfd" value="" readonly class="readonly-field"></div>
+                            <div class="input-group"><label>Thickness (µm)</label><input type="number" id="m1_thick" placeholder="e.g. 6" step="0.1" oninput="calculateM1()"></div>
+                            <div class="input-group"><label>Width (mm)</label><input type="number" id="m1_width" placeholder="e.g. 30" step="0.1" oninput="calculateM1()"></div>
+                            <div class="input-group"><label>Free Margin (mm)</label><input type="number" id="m1_margin" placeholder="e.g. 1.5" step="0.1" oninput="calculateM1()"></div>
+                            <div class="input-group"><label>Offset (mm)</label><input type="number" id="m1_offset" placeholder="e.g. 1" step="0.1" oninput="calculateM1()"></div>
+                            <div class="input-group"><label>Core OD (mm)</label><input type="number" id="m1_coreOd" placeholder="e.g. 9" step="0.1" oninput="calculateM1()"></div>
+                            <div class="input-group"><label>Cover Turns</label><input type="number" id="m1_covTurns" placeholder="e.g. 10" step="1" oninput="calculateM1()"></div>
+                        </div>
+                        <div class="btn-row">
+                            <button class="btn btn-primary btn-force" data-req="m1_mfd m1_thick m1_width m1_margin m1_offset m1_coreOd m1_covTurns" data-tab="m1" onclick="calculateM1()">Force Calc</button>
+                            <button class="btn btn-outline" onclick="printTicket('m1')">🖨️ Print Ticket</button>
+                        </div>
+                        <div class="winding-diagram-wrap">
+                            <div class="wd-eyebrow">Cross Section — Live</div>
+                            <svg id="windingDiagram" viewBox="0 0 320 240" class="winding-svg"></svg>
+                            <div class="wd-stats">
+                                <div><span id="wd-turns">—</span><label>Turns</label></div>
+                                <div><span id="wd-length">—</span><label>Length (m)</label></div>
+                                <div><span id="wd-weight">—</span><label>Weight (g)</label></div>
+                            </div>
+                        </div>
+                        <div class="results">
+                            <div class="result-row"><span class="result-label">Length (m)</span><span class="result-val highlight-val" id="m1_res_length">0.000</span></div>
+                            <div class="result-row"><span class="result-label">Weight of Element (g)</span><span class="result-val" id="m1_res_wtEle">0.000</span></div>
+                            <div class="result-row"><span class="result-label">Dia Incl Cover (mm)</span><span class="result-val highlight-val" id="m1_res_dia">0.000</span></div>
+                            <div class="result-row"><span class="result-label">No of Turns</span><span class="result-val" id="m1_res_turns">0.000</span></div>
+                            <div class="result-row"><span class="result-label">Cover Film Wt (g)</span><span class="result-val" id="m1_res_covWt">0.000</span></div>
+                            <div class="result-row"><span class="result-label">SA / MFD</span><span class="result-val" id="m1_res_sa">0.000</span></div>
+                            <div class="result-row"><span class="result-label">Weight of Core (g)</span><span class="result-val" id="m1_res_coreWt">0.000</span></div>
+                            <div class="result-row" style="border-top: 2px solid var(--border); padding-top: 12px; margin-top: 6px;">
+                                <span class="result-label" style="font-weight: 800; color: var(--text);">Total Element Wt. (g)</span><span class="result-val highlight-val" style="font-size: 20px;" id="m1_res_totalWt">0.000</span>
+                            </div>
+                            <div class="result-row" style="margin-top: 10px;"><span class="result-label">Fits Can (Ø <span id="m1_canId_echo">—</span>mm, +<span id="m1_clearance_echo">6</span>mm clearance)</span><span class="can-fit-badge" id="m1_res_canFit">—</span></div>
+                            <div style="border-top: 1px solid var(--border); margin-top: 16px; padding-top: 14px;">
+                                <div style="font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 10px;">Send Winding Params To</div>
+                                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                                    <button class="btn btn-outline" style="margin-bottom:0; width:auto; padding:8px 14px; font-size:12px;" onclick="sendToTab('dcw')">DCW →</button>
+                                    <button class="btn btn-outline" style="margin-bottom:0; width:auto; padding:8px 14px; font-size:12px;" onclick="sendToTab('tcw_mfd')">TCW MFD →</button>
+                                    <button class="btn btn-outline" style="margin-bottom:0; width:auto; padding:8px 14px; font-size:12px;" onclick="sendToTab('tcw_kvar')">TCW kVAr →</button>
+                                    <button class="btn btn-outline" style="margin-bottom:0; width:auto; padding:8px 14px; font-size:12px;" onclick="sendToTab('flat')">Flat Elements →</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card potting">
+                        <div class="card-title">Potting Recipe</div>
+                        <div class="input-grid">
+                            <div class="input-group full"><label>Element Vol (cm³)</label><input type="number" id="m1_eleVol" value="" readonly class="readonly-field"></div>
+                            <div class="input-group"><label>Can Inner Dia (mm)</label><input type="number" id="m1_canId" placeholder="e.g. 26" step="0.1" oninput="calculateM1()"></div>
+                            <div class="input-group"><label>Fit Clearance (mm)</label><input type="number" id="m1_clearance" placeholder="e.g. 6" step="0.1" oninput="calculateM1()"></div>
+                            <div class="input-group"><label>Height Above Ele (mm)</label><input type="number" id="m1_htAbove" placeholder="e.g. 5" step="0.1" oninput="calculateM1()"></div>
+                            <div class="input-group"><label>Resin Density (g/cm³)</label><input type="number" id="m1_density" placeholder="e.g. 1.41" step="0.01" oninput="calculateM1()"></div>
+                            <div class="input-group"><label>Hardener Ratio (%)</label><input type="number" id="m1_ratio" placeholder="e.g. 20" step="1" oninput="calculateM1()"></div>
+                        </div>
+                        <button class="btn btn-potting btn-force" data-req="m1_mfd m1_thick m1_width m1_margin m1_offset m1_coreOd m1_covTurns m1_canId m1_htAbove m1_density m1_ratio" data-tab="m1" onclick="calculateM1()">Force Generate</button>
+                        <div class="results">
+                            <div class="result-row"><span class="result-label">Can Vol (cm³)</span><span class="result-val" id="m1_res_canVol">0.00</span></div>
+                            <div class="result-row"><span class="result-label">Void Space (cm³)</span><span class="result-val" id="m1_res_void">0.00</span></div>
+                            <div class="recipe-box">
+                                <div class="recipe-row"><span>Resin [Part A]</span><span id="m1_res_resin" class="potting-val">0.00 g</span></div>
+                                <div class="recipe-row"><span>Hardener [Part B]</span><span id="m1_res_hardener" class="potting-val">0.00 g</span></div>
+                                <div class="recipe-row" style="border-top: 1px dashed rgba(16,185,129,0.3); padding-top: 12px; margin-top: 8px; font-size: 18px;">
+                                    <span>Total Mix</span><span id="m1_res_totalMix">0.00 g</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW 2: KVAR -->
+            <div id="view-kvar" class="view">
+                <div class="container">
+                    <div class="card">
+                        <div class="card-title">INPUT - kVAr to µF</div>
+                        <div class="input-grid">
+                            <div class="input-group"><label>kVAr</label><input type="number" id="m2_kvar" placeholder="e.g. 1" step="0.1" oninput="calculateM2_Left()"></div>
+                            <div class="input-group"><label>Voltage (V)</label><input type="number" id="m2_vin" placeholder="e.g. 415" step="1" oninput="calculateM2_Left()"></div>
+                            <div class="input-group"><label>Frequency (Hz)</label><input type="number" id="m2_freq1" placeholder="e.g. 50" step="1" oninput="calculateM2_Left()"></div>
+                            <div class="input-group"><label>Phase</label><select id="m2_phase" onchange="updatePhaseLabels(); calculateM2_Left();"><option value="3">3</option><option value="1">1</option></select></div>
+                        </div>
+                        <button class="btn btn-primary btn-force" data-req="m2_kvar m2_vin m2_freq1" onclick="calculateM2_Left()">Force Calculate</button>
+                        <div class="results">
+                            <div class="result-row"><span class="result-label">MFD Each Element</span><span class="result-val highlight-val" id="m2_res_mfdEach">0.00</span></div>
+                            <div class="result-row"><span class="result-label">Φ Capacitance (µF)</span><span class="result-val" id="m2_res_mfdTotal">0.00</span></div>
+                            <div class="result-row"><span class="result-label">Reactive Current (A)</span><span class="result-val" id="m2_res_amps">0.00</span></div>
+                        </div>
+                    </div>
+                    <div class="card alt-card">
+                        <div class="card-title">INPUT - µF to kVAr</div>
+                        <div class="input-grid">
+                            <div class="input-group full"><label>Enter Frequency (Hz)</label><input type="number" id="m2_freq2" placeholder="e.g. 50" step="1" oninput="calculateM2_Right()"></div>
+                            <div class="input-group"><label id="lbl_mfd_total">Enter 3-Φ Total µF</label><input type="number" id="m2_mfdIn" placeholder="e.g. 9.24" step="0.01" oninput="calculateM2_Right()"></div>
+                            <div class="input-group"><label>Enter Volts</label><input type="number" id="m2_vout" placeholder="e.g. 440" step="1" oninput="calculateM2_Right()"></div>
+                        </div>
+                        <button class="btn btn-alt btn-force" data-req="m2_freq2 m2_mfdIn m2_vout" onclick="calculateM2_Right()">Force Calculate</button>
+                        <div class="results">
+                            <div class="result-row" style="border:none;"><span class="result-label" id="lbl_kvar_out" style="color: var(--purple);">Total Power (kVAr)</span><span class="result-val alt-highlight" style="font-size:22px" id="m2_res_kvarOut">0.000</span></div>
+                        </div>
+                    </div>
+                    <div class="card potting full-width">
+                        <div class="card-title">FINAL DATA - Winding Parameters</div>
+                        <div class="input-grid">
+                            <div class="input-group"><label>Film Type</label><select id="m2_filmType" onchange="calculateM2Winding()"><option value="SLOPE/WC">SLOPE/WC</option><option value="SERIES">SERIES</option></select></div>
+                            <div class="input-group"><label>MFD (Drawing)</label><input type="number" id="m2_w_mfd" placeholder="e.g. 6.16" step="0.01" oninput="calculateM2Winding()"></div>
+                            <div class="input-group"><label>Pos Tol %</label><input type="number" id="m2_w_posTol" placeholder="e.g. 0" step="0.1" oninput="calculateM2Winding()"></div>
+                            <div class="input-group"><label>Fin. MFD</label><input type="number" id="m2_w_finMfd" value="" readonly class="readonly-field"></div>
+                            <div class="input-group"><label>Thickness (µm)</label><input type="number" id="m2_w_thick" placeholder="e.g. 6" step="0.1" oninput="calculateM2Winding()"></div>
+                            <div class="input-group"><label>Width (mm)</label><input type="number" id="m2_w_width" placeholder="e.g. 37.5" step="0.1" oninput="calculateM2Winding()"></div>
+                            <div class="input-group"><label>Core OD (mm)</label><input type="number" id="m2_w_coreOd" placeholder="e.g. 9" step="0.1" oninput="calculateM2Winding()"></div>
+                            <div class="input-group"><label>Wt of Core (g)</label><input type="number" id="m2_w_coreWt" placeholder="e.g. 1" step="0.1" oninput="calculateM2Winding()"></div>
+                            <div class="input-group full"><label>Cover Turns</label><input type="number" id="m2_w_covTurns" placeholder="e.g. 10" step="1" oninput="calculateM2Winding()"></div>
+                            <div class="input-group full"><label>Target Can Dia (mm) — optional</label><input type="number" id="m2_w_canDia" placeholder="e.g. 54" step="0.1" oninput="calculateM2Winding()"></div>
+                            <div class="input-group full"><label>Fit Clearance (mm)</label><input type="number" id="m2_w_clearance" placeholder="e.g. 9" step="0.1" oninput="calculateM2Winding()"></div>
+                        </div>
+                        <div class="btn-row">
+                            <button class="btn btn-potting btn-force" data-req="m2_w_mfd m2_w_thick m2_w_width m2_w_coreOd m2_w_coreWt m2_w_covTurns" data-tab="m2" onclick="calculateM2Winding()">Force Calc</button>
+                            <button class="btn btn-outline" onclick="printTicket('m2')">🖨️ Print Ticket</button>
+                        </div>
+                        <div class="results" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                            <div>
+                                <div class="result-row"><span class="result-label">Length (m)</span><span class="result-val potting-val" id="m2_res_len">0.000</span></div>
+                                <div class="result-row"><span class="result-label">Dia Incl Cover</span><span class="result-val potting-val" id="m2_res_dia">0.000</span></div>
+                                <div class="result-row"><span class="result-label">No of Turns</span><span class="result-val" id="m2_res_turns">0.000</span></div>
+                                <div class="result-row"><span class="result-label">SA / MFD</span><span class="result-val" id="m2_res_sa">0.000</span></div>
+                            </div>
+                            <div>
+                                <div class="result-row"><span class="result-label">Element Wt (g)</span><span class="result-val" id="m2_res_wtEle">0.000</span></div>
+                                <div class="result-row"><span class="result-label">Cover Wt (g)</span><span class="result-val" id="m2_res_covWt">0.000</span></div>
+                                <div class="result-row" style="border-top: 2px solid var(--border); padding-top: 12px; margin-top: 6px;">
+                                    <span class="result-label" style="font-weight:800; color:var(--text)">Total Element Wt.</span><span class="result-val potting-val" style="font-size:20px" id="m2_res_totalWt">0.000</span>
+                                </div>
+                                <div class="result-row" style="margin-top: 10px;"><span class="result-label">Fits Can (+<span id="m2_clearance_echo">9</span>mm clearance)</span><span class="can-fit-badge" id="m2_res_canFit">—</span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW 3: DCW -->
+            <div id="view-dcw" class="view">
+                <div class="container">
+                    <div class="card dcw-card full-width">
+                        <div class="card-title">Double Concentric Winding</div>
+                        <div class="input-grid">
+                            <div class="input-group"><label>Target MFD 1</label><input type="number" id="m3_mfd1" placeholder="e.g. 5" step="0.1" oninput="calculateM3()"></div>
+                            <div class="input-group"><label>Target MFD 2</label><input type="number" id="m3_mfd2" placeholder="e.g. 55" step="0.1" oninput="calculateM3()"></div>
+                            <div class="input-group"><label>Pos Tol %</label><input type="number" id="m3_posTol" placeholder="e.g. 0" step="0.1" oninput="calculateM3()"></div>
+                            <div class="input-group"><label>Core OD (mm)</label><input type="number" id="m3_coreOd" placeholder="e.g. 9" step="0.1" oninput="calculateM3()"></div>
+                            <div class="input-group"><label>Fin. MFD 1</label><input type="number" id="m3_finMfd1" value="" readonly class="readonly-field"></div>
+                            <div class="input-group"><label>Fin. MFD 2</label><input type="number" id="m3_finMfd2" value="" readonly class="readonly-field"></div>
+                            <div class="input-group"><label>Thickness (µm)</label><input type="number" id="m3_thick" placeholder="e.g. 4.9" step="0.1" oninput="calculateM3()"></div>
+                            <div class="input-group"><label>Width (mm)</label><input type="number" id="m3_width" placeholder="e.g. 75" step="0.1" oninput="calculateM3()"></div>
+                            <div class="input-group"><label>Free Margin (mm)</label><input type="number" id="m3_margin" placeholder="e.g. 2" step="0.1" oninput="calculateM3()"></div>
+                            <div class="input-group"><label>Offset (mm)</label><input type="number" id="m3_offset" placeholder="e.g. 1" step="0.1" oninput="calculateM3()"></div>
+                            <div class="input-group"><label>Wt of Core (g)</label><input type="number" id="m3_coreWt" placeholder="e.g. 1" step="0.1" oninput="calculateM3()"></div>
+                            <div class="input-group"><label>Cover Turns (Out)</label><input type="number" id="m3_covTurns" placeholder="e.g. 10" step="1" oninput="calculateM3()"></div>
+                        </div>
+                        <div class="btn-row">
+                            <button class="btn btn-dcw btn-force" data-req="m3_mfd1 m3_mfd2 m3_coreOd m3_thick m3_width m3_margin m3_offset m3_coreWt m3_covTurns" data-tab="m3" onclick="calculateM3()">Force Calc</button>
+                            <button class="btn btn-outline" onclick="printTicket('m3')">🖨️ Print Ticket</button>
+                        </div>
+                        <div class="results" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                            <div>
+                                <div class="results-header" style="color: var(--warning);">Dimensions (In / Out)</div>
+                                <div class="result-row"><span class="result-label">Length (L1/L2)</span><span class="result-val dcw-highlight" id="m3_res_lens">0 / 0 m</span></div>
+                                <div class="result-row"><span class="result-label">Ele Dia (D1/D2)</span><span class="result-val dcw-highlight" id="m3_res_dias">0 / 0 mm</span></div>
+                                <div class="result-row"><span class="result-label">Turns (N1/N2)</span><span class="result-val" id="m3_res_turns">0 / 0</span></div>
+                                <div class="result-row"><span class="result-label">Wts (W1/W2)</span><span class="result-val" id="m3_res_wts">0 / 0 g</span></div>
+                            </div>
+                            <div>
+                                <div class="results-header" style="color: var(--warning);">Final Assembly</div>
+                                <div class="result-row"><span class="result-label">Outer Cover Wt</span><span class="result-val" id="m3_res_covWt">0.000 g</span></div>
+                                <div class="result-row"><span class="result-label">Total Turns</span><span class="result-val" id="m3_res_totTurns">0</span></div>
+                                <div class="result-row"><span class="result-label">Final Dia (w/ Cover)</span><span class="result-val dcw-highlight" id="m3_res_totDia">0.00 mm</span></div>
+                                <div class="result-row" style="border-top: 2px solid var(--border); padding-top: 12px; margin-top: 6px;">
+                                    <span class="result-label" style="font-weight:800; color:var(--text)">Total Element Wt.</span><span class="result-val dcw-highlight" style="font-size:20px" id="m3_res_totWt">0.000 g</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW 4: TCW -->
+            <div id="view-tcw" class="view">
+                <div class="top-toggle-container">
+                    <div class="toggle-group">
+                        <div class="toggle-btn active" id="btn_tcw_mfd" onclick="switchTcwMode('mfd')">TCW MFD</div>
+                        <div class="toggle-btn" id="btn_tcw_kvar" onclick="switchTcwMode('kvar')">TCW KVAR</div>
+                    </div>
+                </div>
+
+                <div class="container full-width">
+                    <!-- TCW MFD VIEW -->
+                    <div id="view_tcw_mfd" class="tcw-view active full-width">
+                        <div class="card tcw-card full-width">
+                            <div class="card-title">TCW MFD - Custom Inputs</div>
+                            <div class="input-grid">
+                                <div class="input-group"><label>MFD 1 (Inner)</label><input type="number" id="m4_mfd1" placeholder="e.g. 2.5" step="0.1" oninput="calculateTCW_MFD()"></div>
+                                <div class="input-group"><label>MFD 2 (Middle)</label><input type="number" id="m4_mfd2" placeholder="e.g. 5" step="0.1" oninput="calculateTCW_MFD()"></div>
+                                <div class="input-group"><label>MFD 3 (Outer)</label><input type="number" id="m4_mfd3" placeholder="e.g. 7.5" step="0.1" oninput="calculateTCW_MFD()"></div>
+                                <div class="input-group"><label>Pos Tol %</label><input type="number" id="m4_posTol" placeholder="e.g. 0" step="0.1" oninput="calculateTCW_MFD()"></div>
+                                <div class="input-group"><label>Thickness (µm)</label><input type="number" id="m4_thick" placeholder="e.g. 5.9" step="0.1" oninput="calculateTCW_MFD()"></div>
+                                <div class="input-group"><label>Width (mm)</label><input type="number" id="m4_width" placeholder="e.g. 37.5" step="0.1" oninput="calculateTCW_MFD()"></div>
+                                <div class="input-group"><label>Free Margin (mm)</label><input type="number" id="m4_margin" placeholder="e.g. 2.5" step="0.1" oninput="calculateTCW_MFD()"></div>
+                                <div class="input-group"><label>Offset (mm)</label><input type="number" id="m4_offset" placeholder="e.g. 1" step="0.1" oninput="calculateTCW_MFD()"></div>
+                                <div class="input-group"><label>Core OD (mm)</label><input type="number" id="m4_coreOd" placeholder="e.g. 9" step="0.1" oninput="calculateTCW_MFD()"></div>
+                                <div class="input-group"><label>Cover Turns (Out)</label><input type="number" id="m4_covTurns" placeholder="e.g. 10" step="1" oninput="calculateTCW_MFD()"></div>
+                                <div class="input-group"><label>Wt of Core (g)</label><input type="number" id="m4_coreWt" placeholder="e.g. 1" step="0.1" oninput="calculateTCW_MFD()"></div>
+                            </div>
+                            <div class="btn-row">
+                                <button class="btn btn-tcw btn-force" data-req="m4_mfd1 m4_mfd2 m4_mfd3 m4_thick m4_width m4_margin m4_offset m4_coreOd m4_covTurns m4_coreWt" data-tab="m4" onclick="calculateTCW_MFD()">Force Calc</button>
+                                <button class="btn btn-outline" onclick="printTicket('m4')">🖨️ Print Ticket</button>
+                            </div>
+                            <div class="results" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                                <div>
+                                    <div class="results-header" style="color: var(--purple);">Dimensions (In / Mid / Out)</div>
+                                    <div class="result-row"><span class="result-label">L (m)</span><span class="result-val tcw-highlight" id="m4_res_lens">0 / 0 / 0</span></div>
+                                    <div class="result-row"><span class="result-label">Dia (mm)</span><span class="result-val tcw-highlight" id="m4_res_dias">0 / 0 / 0</span></div>
+                                    <div class="result-row"><span class="result-label">Turns</span><span class="result-val" id="m4_res_turns">0 / 0 / 0</span></div>
+                                    <div class="result-row"><span class="result-label">Wts (g)</span><span class="result-val" id="m4_res_wts">0 / 0 / 0</span></div>
+                                </div>
+                                <div>
+                                    <div class="results-header" style="color: var(--purple);">Final Assembly</div>
+                                    <div class="result-row"><span class="result-label">Total Turns</span><span class="result-val" id="m4_res_totTurns">0</span></div>
+                                    <div class="result-row"><span class="result-label">Final Dia (w/ Cov)</span><span class="result-val tcw-highlight" id="m4_res_totDia">0.00 mm</span></div>
+                                    <div class="result-row" style="border-top: 2px solid var(--border); padding-top: 12px; margin-top: 6px;">
+                                        <span class="result-label" style="font-weight:800; color:var(--text)">Total Element Wt.</span><span class="result-val tcw-highlight" style="font-size:20px" id="m4_res_totWt">0.000 g</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TCW KVAR VIEW -->
+                    <div id="view_tcw_kvar" class="tcw-view full-width">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px;">
+                            <div class="card">
+                                <div class="card-title">INPUT - kVAr to µF</div>
+                                <div class="input-grid">
+                                    <div class="input-group full"><label>kVAr</label><input type="number" id="m5_kvar" placeholder="e.g. 1" step="0.1" oninput="calculateM5_Left()"></div>
+                                    <div class="input-group"><label>Voltage (V)</label><input type="number" id="m5_vin" placeholder="e.g. 415" step="1" oninput="calculateM5_Left()"></div>
+                                    <div class="input-group"><label>Frequency (Hz)</label><input type="number" id="m5_freq1" placeholder="e.g. 50" step="1" oninput="calculateM5_Left()"></div>
+                                </div>
+                                <div class="results">
+                                    <div class="result-row"><span class="result-label">MFD per Phase</span><span class="result-val highlight-val" id="m5_res_mfdEach">0.00</span></div>
+                                    <div class="result-row"><span class="result-label">Total µF</span><span class="result-val" id="m5_res_mfdTotal">0.00</span></div>
+                                </div>
+                            </div>
+                            <div class="card alt-card">
+                                <div class="card-title">INPUT - µF to kVAr</div>
+                                <div class="input-grid">
+                                    <div class="input-group full"><label>Enter 3-Φ Total µF</label><input type="number" id="m5_mfdIn" placeholder="e.g. 9.24" step="0.01" oninput="calculateM5_Right()"></div>
+                                    <div class="input-group"><label>Volts</label><input type="number" id="m5_vout" placeholder="e.g. 440" step="1" oninput="calculateM5_Right()"></div>
+                                    <div class="input-group"><label>Freq (Hz)</label><input type="number" id="m5_freq2" placeholder="e.g. 50" step="1" oninput="calculateM5_Right()"></div>
+                                </div>
+                                <div class="results">
+                                    <div class="result-row" style="border:none;"><span class="result-label" style="color: var(--purple);">Total kVAr</span><span class="result-val alt-highlight" style="font-size:22px" id="m5_res_kvarOut">0.000</span></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card tcw-card full-width">
+                            <div class="card-title">TCW KVAR Winding</div>
+                            <div class="input-grid">
+                                <div class="input-group full"><label>MFD per Phase (from above)</label><input type="number" id="m5_w_mfd" placeholder="e.g. 12.5" step="0.01" oninput="calculateTCW_KVAR()"></div>
+                                <div class="input-group"><label>Pos Tol %</label><input type="number" id="m5_w_posTol" placeholder="e.g. 0" step="0.1" oninput="calculateTCW_KVAR()"></div>
+                                <div class="input-group"><label>Core OD (mm)</label><input type="number" id="m5_w_coreOd" placeholder="e.g. 9" step="0.1" oninput="calculateTCW_KVAR()"></div>
+                                <div class="input-group"><label>Thickness (µm)</label><input type="number" id="m5_w_thick" placeholder="e.g. 7.8" step="0.1" oninput="calculateTCW_KVAR()"></div>
+                                <div class="input-group"><label>Width (mm)</label><input type="number" id="m5_w_width" placeholder="e.g. 75" step="0.1" oninput="calculateTCW_KVAR()"></div>
+                                <div class="input-group"><label>Free Margin (mm)</label><input type="number" id="m5_w_margin" placeholder="e.g. 2" step="0.1" oninput="calculateTCW_KVAR()"></div>
+                                <div class="input-group"><label>Offset (mm)</label><input type="number" id="m5_w_offset" placeholder="e.g. 1" step="0.1" oninput="calculateTCW_KVAR()"></div>
+                                <div class="input-group"><label>Wt of Core (g)</label><input type="number" id="m5_w_coreWt" placeholder="e.g. 1" step="0.1" oninput="calculateTCW_KVAR()"></div>
+                                <div class="input-group"><label>Cover Turns</label><input type="number" id="m5_w_covTurns" placeholder="e.g. 10" step="1" oninput="calculateTCW_KVAR()"></div>
+                            </div>
+                            <div class="btn-row">
+                            <button class="btn btn-tcw btn-force" data-req="m5_w_mfd m5_w_coreOd m5_w_thick m5_w_width m5_w_margin m5_w_offset m5_w_coreWt m5_w_covTurns" data-tab="m5" onclick="calculateTCW_KVAR()">Force Calc</button>
+                                <button class="btn btn-outline" onclick="printTicket('m5')">🖨️ Print Ticket</button>
+                            </div>
+                            <div class="results" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                                <div>
+                                    <div class="results-header" style="color: var(--purple);">Dimensions (In / Mid / Out)</div>
+                                    <div class="result-row"><span class="result-label">L (m)</span><span class="result-val tcw-highlight" id="m5_res_lens">0 / 0 / 0</span></div>
+                                    <div class="result-row"><span class="result-label">Dia (mm)</span><span class="result-val tcw-highlight" id="m5_res_dias">0 / 0 / 0</span></div>
+                                    <div class="result-row"><span class="result-label">Turns</span><span class="result-val" id="m5_res_turns">0 / 0 / 0</span></div>
+                                </div>
+                                <div>
+                                    <div class="results-header" style="color: var(--purple);">Final Assembly</div>
+                                    <div class="result-row"><span class="result-label">Total Turns</span><span class="result-val" id="m5_res_totTurns">0</span></div>
+                                    <div class="result-row"><span class="result-label">Final Dia (w/ Cov)</span><span class="result-val tcw-highlight" id="m5_res_totDia">0.00 mm</span></div>
+                                    <div class="result-row" style="border-top: 2px solid var(--border); padding-top: 12px; margin-top: 6px;">
+                                        <span class="result-label" style="font-weight:800; color:var(--text)">Total Element Wt.</span><span class="result-val tcw-highlight" style="font-size:20px" id="m5_res_totWt">0.000 g</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW 5: FLAT ELEMENTS -->
+            <div id="view-flat" class="view">
+                <div class="container">
+                    <div class="card flat-card full-width">
+                        <div class="card-title">Flat Element Parameters</div>
+                        <div class="input-grid">
+                            <div class="input-group"><label>Target MFD</label><input type="number" id="f_mfd" placeholder="e.g. 8" step="0.1" oninput="calculateFlat()"></div>
+                            <div class="input-group"><label>Pos Tol %</label><input type="number" id="f_posTol" placeholder="e.g. 0" step="0.1" oninput="calculateFlat()"></div>
+                            <div class="input-group full"><label>Fin. MFD</label><input type="number" id="f_finMfd" value="" readonly class="readonly-field"></div>
+                            <div class="input-group"><label>Thickness (µm)</label><input type="number" id="f_thick" placeholder="e.g. 5.9" step="0.1" oninput="calculateFlat()"></div>
+                            <div class="input-group"><label>Width (mm)</label><input type="number" id="f_width" placeholder="e.g. 37.5" step="0.1" oninput="calculateFlat()"></div>
+                            <div class="input-group"><label>Free Margin (mm)</label><input type="number" id="f_margin" placeholder="e.g. 1.5" step="0.1" oninput="calculateFlat()"></div>
+                            <div class="input-group"><label>Offset (mm)</label><input type="number" id="f_offset" placeholder="e.g. 1" step="0.1" oninput="calculateFlat()"></div>
+                            <div class="input-group"><label>Core OD (mm)</label><input type="number" id="f_coreOd" placeholder="e.g. 9" step="0.1" oninput="calculateFlat()"></div>
+                            <div class="input-group"><label>Cover Turns</label><input type="number" id="f_covTurns" placeholder="e.g. 10" step="1" oninput="calculateFlat()"></div>
+                            <div class="input-group full"><label>Weight of Core (g)</label><input type="number" id="f_coreWt" placeholder="e.g. 1" step="0.1" oninput="calculateFlat()"></div>
+                            <div class="input-group full"><label>Target Can Dia (mm) — optional</label><input type="number" id="f_canDia" placeholder="e.g. 30" step="0.1" oninput="calculateFlat()"></div>
+                            <div class="input-group full"><label>Fit Clearance (mm)</label><input type="number" id="f_clearance" placeholder="e.g. 6" step="0.1" oninput="calculateFlat()"></div>
+                        </div>
+                        <div class="btn-row">
+                            <button class="btn btn-flat btn-force" data-req="f_mfd f_thick f_width f_margin f_offset f_coreOd f_covTurns f_coreWt" data-tab="f" onclick="calculateFlat()">Force Calc</button>
+                            <button class="btn btn-outline" onclick="printTicket('f')">🖨️ Print Ticket</button>
+                        </div>
+
+                        <div class="results" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                            <div>
+                                <div class="results-header" style="color: var(--flat);">Element Physical Data</div>
+                                <div class="result-row"><span class="result-label">Length (m)</span><span class="result-val" id="f_res_length">0.000</span></div>
+                                <div class="result-row"><span class="result-label">Weight of Element (g)</span><span class="result-val" id="f_res_wtEle">0.000</span></div>
+                                <div class="result-row"><span class="result-label">Dia Incl Cover (mm)</span><span class="result-val" id="f_res_dia">0.000</span></div>
+                                <div class="result-row"><span class="result-label">No of Turns</span><span class="result-val" id="f_res_turns">0.000</span></div>
+                                <div class="result-row"><span class="result-label">SA / MFD</span><span class="result-val" id="f_res_sa">0.000</span></div>
+                                <div class="result-row" style="border-top: 2px solid var(--border); padding-top: 12px; margin-top: 6px;">
+                                    <span class="result-label" style="font-weight:800; color:var(--text)">Total Element Wt.</span><span class="result-val flat-highlight" style="font-size:20px" id="f_res_totalWt">0.000</span>
+                                </div>
+                                <div class="result-row" style="margin-top: 10px;"><span class="result-label">Fits Can (+<span id="f_clearance_echo">6</span>mm clearance)</span><span class="can-fit-badge" id="f_res_canFit">—</span></div>
+                            </div>
+                            <div>
+                                <div class="results-header" style="color: var(--flat);">Flattened Dimensions</div>
+                                <div class="result-row"><span class="result-label">Ele length (mm)</span><span class="result-val flat-highlight" id="f_res_eLen">0.00</span></div>
+                                <div class="result-row"><span class="result-label">Ele width (mm)</span><span class="result-val flat-highlight" id="f_res_eWid">0.00</span></div>
+                                <div class="result-row"><span class="result-label">Ele height (mm)</span><span class="result-val flat-highlight" id="f_res_eHt">0.00</span></div>
+                                
+                                <div class="results-header" style="color: var(--flat); margin-top: 24px;">Minimum PBT Box Size</div>
+                                <div class="result-row"><span class="result-label">PBT Box Length (mm)</span><span class="result-val" id="f_res_bLen">0.00</span></div>
+                                <div class="result-row"><span class="result-label">PBT Box Width (mm)</span><span class="result-val" id="f_res_bWid">0.00</span></div>
+                                <div class="result-row"><span class="result-label">PBT Box Height (mm)</span><span class="result-val" id="f_res_bHt">0.00</span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW 6: FORMULA MATRIX -->
+            <div id="view-matrix" class="view">
+                <div class="container full-width">
+                    <div class="card matrix-card full-width">
+                        <div class="card-title">Cap Formula Matrix</div>
+                        <div style="display: flex; gap: 16px; margin-bottom: 16px; max-width: 560px; flex-wrap: wrap;">
+                            <button class="btn btn-matrix" style="margin-bottom:0" onclick="calculateMatrixAll()">Force Calc</button>
+                            <button class="btn btn-outline" style="margin-bottom:0" onclick="addMatrixRow()">+ Add Row</button>
+                            <button class="btn btn-outline" style="margin-bottom:0" onclick="exportMatrixCSV()">Export CSV</button>
+                        </div>
+                        <div class="table-container">
+                            <table class="matrix-table" id="matrixTable">
+                                <thead>
+                                    <tr>
+                                        <th>Target MFD</th>
+                                        <th>Tol %</th>
+                                        <th>Thick (µm)</th>
+                                        <th>Width (mm)</th>
+                                        <th>Margin (mm)</th>
+                                        <th>Offset (mm)</th>
+                                        <th>Core OD</th>
+                                        <th>Core Wt (g)</th>
+                                        <th>Cov Turns</th>
+                                        <th class="out-head">Fin MFD</th>
+                                        <th class="out-head">Length (m)</th>
+                                        <th class="out-head">Dia (mm)</th>
+                                        <th class="out-head">Turns</th>
+                                        <th class="out-head">Ele Wt (g)</th>
+                                        <th class="out-head">Cov Wt (g)</th>
+                                        <th class="out-head">SA / MFD</th>
+                                        <th class="out-head">Total Wt (g)</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="matrixBody">
+                                    <!-- Rows injected by JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW 7: PRODUCT LIBRARY -->
+            <div id="view-library" class="view">
+                <div class="container full-width">
+                    <div class="card full-width">
+                        <div class="card-title">Qualified Product Reference</div>
+                        <p style="color:var(--muted); font-size:13px; margin-top:-12px; margin-bottom:20px;">56 real qualified designs pulled from the master "Cap + Resin" workbook. Search, or tap a row to load it straight into Cap Formula.</p>
+                        <div style="display:flex; gap:12px; margin-bottom:16px; flex-wrap:wrap; align-items:center;">
+                            <input type="text" id="lib-search" placeholder="Search by Code ID, thickness, width, or MFD..." oninput="renderLibrary()" style="flex:1; min-width:220px;">
+                            <span id="lib-count" style="color:var(--muted); font-size:13px; white-space:nowrap;"></span>
+                        </div>
+                        <div class="table-container">
+                            <table class="matrix-table" id="libraryTable">
+                                <thead>
+                                    <tr>
+                                        <th>Code ID</th>
+                                        <th>Thick (µm)</th>
+                                        <th>Width (mm)</th>
+                                        <th>MFD (µF)</th>
+                                        <th class="out-head">Dia (mm)</th>
+                                        <th class="out-head">Turns</th>
+                                        <th class="out-head">Total Wt (g)</th>
+                                        <th>Can ID (mm)</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="libraryBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div> <!-- /main-scroll -->
+    </div> <!-- /app-body -->
+
+    <!-- BOTTOM NAVIGATION (MOBILE) -->
+    <nav id="bnav">
+        <div class="ni on" id="ni-formula" onclick="navTo('formula')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path><path d="M22 12A10 10 0 0 0 12 2v10z"></path></svg><span>Formula</span></div>
+        <div class="ni" id="ni-kvar" onclick="navTo('kvar')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg><span>kVAr</span></div>
+        <div class="ni" id="ni-dcw" onclick="navTo('dcw')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle></svg><span>DCW</span></div>
+        <div class="ni" id="ni-tcw" onclick="navTo('tcw')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path><path d="M2 12h20"></path></svg><span>TCW</span></div>
+        <div class="ni" id="ni-flat" onclick="navTo('flat')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg><span>Flat</span></div>
+        <div class="ni" id="ni-matrix" onclick="navTo('matrix')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="3" y1="15" x2="21" y2="15"></line><line x1="9" y1="3" x2="9" y2="21"></line><line x1="15" y1="3" x2="15" y2="21"></line></svg><span>Matrix</span></div>
+        <div class="ni" id="ni-library" onclick="navTo('library')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg><span>Library</span></div>
+    </nav>
+
+    <!-- DIAGNOSTICS / SELF-TEST MODAL -->
+    <div id="diag-overlay" onclick="if(event.target===this) closeDiagnostics()">
+        <div class="diag-modal">
+            <div class="diag-head">
+                <div>
+                    <h3>Engine Self-Test</h3>
+                    <div class="diag-summary" id="diag-summary">Running...</div>
+                </div>
+                <button class="icon-btn" onclick="closeDiagnostics()" title="Close">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+            <div class="diag-body" id="diag-body"></div>
+            <div class="diag-footer">
+                <button class="btn btn-outline" style="margin-bottom:0; display:inline-block; width:auto; padding:10px 20px;" onclick="openDiagnostics()">Re-run</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- CALCULATION HISTORY MODAL -->
+    <div id="hist-overlay" onclick="if(event.target===this) closeHistory()">
+        <div class="diag-modal">
+            <div class="diag-head">
+                <div>
+                    <h3>Calculation History</h3>
+                    <div class="diag-summary" id="hist-count" style="color:var(--muted);">0 saved calculations</div>
+                </div>
+                <button class="icon-btn" onclick="closeHistory()" title="Close">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+            <div class="diag-body" id="hist-body"></div>
+            <div class="diag-footer" style="display:flex; justify-content:flex-end; gap:10px;">
+                <button class="btn btn-outline" style="margin-bottom:0; width:auto; padding:10px 20px;" onclick="clearAllHistory()">Clear All</button>
+                <button class="btn btn-outline" style="margin-bottom:0; width:auto; padding:10px 20px;" onclick="exportHistoryCSV()">Export CSV</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- INVISIBLE PRINT AREA -->
+    <div id="print-area"></div>
+
+    <!-- ============================================== -->
+    <!-- APPLICATION LOGIC                              -->
+    <!-- ============================================== -->
+    <script>
+        // --- THEME LOGIC ---
+        function toggleTheme() {
+            const html = document.documentElement;
+            const current = html.getAttribute('data-theme');
+            const target = current === 'dark' ? 'light' : 'dark';
+            html.setAttribute('data-theme', target);
+            localStorage.setItem('caphub_theme', target);
+            
+            document.getElementById('moon-icon').style.display = target === 'dark' ? 'block' : 'none';
+            document.getElementById('sun-icon').style.display = target === 'light' ? 'block' : 'none';
+        }
+
+        function initTheme() {
+            const saved = localStorage.getItem('caphub_theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', saved);
+            document.getElementById('moon-icon').style.display = saved === 'dark' ? 'block' : 'none';
+            document.getElementById('sun-icon').style.display = saved === 'light' ? 'block' : 'none';
+        }
+
+        // --- NAVIGATION LOGIC ---
+        function navTo(t) {
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('on'));
+            document.querySelectorAll('.ni').forEach(n => n.classList.remove('on'));
+            document.querySelectorAll('.sb-item').forEach(s => s.classList.remove('on'));
+            
+            document.getElementById('view-' + t).classList.add('on');
+            
+            const ni = document.getElementById('ni-' + t);
+            if (ni) ni.classList.add('on');
+            
+            const sb = document.getElementById('sb-' + t);
+            if (sb) sb.classList.add('on');
+            
+            const titles = {
+                'formula': ['Cap Formula', 'Winding & Potting Calculator'],
+                'kvar': ['kVAr Integrator', 'Electrical to Physical Conversions'],
+                'dcw': ['DCW Module', 'Double Concentric Winding'],
+                'tcw': ['TCW Module', 'Triple Concentric Winding'],
+                'flat': ['Flat Elements', 'Flat Element & PBT Box Dimensioning'],
+                'matrix': ['Formula Matrix', 'Batch Calculation Spreadsheet'],
+                'library': ['Product Library', 'Qualified Product Reference']
+            };
+            
+            if(titles[t]) {
+                document.getElementById('appTitle').innerText = titles[t][0];
+                document.getElementById('appSubtitle').innerText = titles[t][1];
+            }
+
+            document.querySelector('.main-scroll').scrollTo({top: 0, behavior: 'smooth'});
+        }
+
+        function switchTcwMode(mode) {
+            document.querySelectorAll('.toggle-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tcw-view').forEach(view => view.classList.remove('active'));
+            if(mode === 'mfd') {
+                document.getElementById('btn_tcw_mfd').classList.add('active');
+                document.getElementById('view_tcw_mfd').classList.add('active');
+            } else {
+                document.getElementById('btn_tcw_kvar').classList.add('active');
+                document.getElementById('view_tcw_kvar').classList.add('active');
+            }
+        }
+
+        function updatePhaseLabels() {
+            const phase = parseInt(document.getElementById('m2_phase').value) || 3;
+            document.getElementById('lbl_mfd_total').innerText = phase === 3 ? "Enter 3-Φ Total µF" : "Enter 1-Φ Total µF";
+            document.getElementById('lbl_kvar_out').innerText = phase === 3 ? "3-Φ Total Power (kVAr)" : "1-Φ Total Power (kVAr)";
+        }
+
+        // --- CORE MATH LIBRARY ---
+        const EXACT_CONSTANT = 51.3136288998358;
+        const COVER_DENSITY_INV = 1 / 910;     // exact Excel divisor (replaces old 0.001098263 approximation, ~0.06% correction)
+        const KVAR_LEGACY_CONST = 159235000;   // Excel's legacy kVAr<->uF constant, kept for exact parity with historical drawings
+
+        // Real qualified products from the master "Cap + Resin" workbook (56 rows, extracted July 2026)
+        const PRODUCT_LIBRARY = [{"thick":5.9,"width":30.0,"mfd":2.0,"posTol":0,"covTurns":10,"coreOd":9,"offset":1,"margin":1.2,"canId":24,"density":1.41,"htAbove":2,"dia":16.3,"wtKg":0.00367,"length":22.76318876007753,"turns":291,"coverWtKg":0.00033285163311787323,"saMfd":197.88781368445743,"coreWt":0.8,"totalWt":0.8040028516331179,"resinG":14.436965617376938,"codeId":"2_6X30_27X52_PP"},{"thick":5.9,"width":30.0,"mfd":2.25,"posTol":0,"covTurns":10,"coreOd":9,"offset":1,"margin":1.2,"canId":24,"density":1.41,"htAbove":2,"dia":16.9,"wtKg":0.00412,"length":25.60858735508722,"turns":319,"coverWtKg":0.0003465109618803425,"saMfd":190.8228136844574,"coreWt":0.8,"totalWt":0.8044665109618804,"resinG":13.584814264549056,"codeId":"2.25_6X30_27X52_PP"},{"thick":5.9,"width":30.0,"mfd":2.5,"posTol":0,"covTurns":10,"coreOd":9,"offset":1,"margin":1.2,"canId":24,"density":1.41,"htAbove":2,"dia":17.6,"wtKg":0.00458,"length":28.45398595009691,"turns":346,"coverWtKg":0.00035964585457789485,"saMfd":185.1708136844574,"coreWt":0.8,"totalWt":0.8049396458545779,"resinG":12.732662911721174,"codeId":"2.5_6X30_27X52_PP"},{"thick":5.9,"width":30.0,"mfd":3.15,"posTol":0,"covTurns":10,"coreOd":9,"offset":1,"margin":1.2,"canId":24,"density":1.41,"htAbove":2,"dia":19.1,"wtKg":0.00577,"length":35.852022297122105,"turns":412,"coverWtKg":0.0003917189033991929,"saMfd":174.67424225588599,"coreWt":0.8,"totalWt":0.8061617189033993,"resinG":10.517069394368681,"codeId":"3.15_6X30_27X52_PP"},{"thick":5.9,"width":30.0,"mfd":4.0,"posTol":0,"covTurns":10,"coreOd":9,"offset":1,"margin":1.2,"canId":32,"density":1.41,"htAbove":2,"dia":21,"wtKg":0.00733,"length":45.52637752015506,"turns":490,"coverWtKg":0.00043003156381968836,"saMfd":166.0953136844574,"coreWt":0.8,"totalWt":0.8077600315638197,"resinG":26.661116714753877,"codeId":"4_6X30_35X52_PP"},{"thick":5.9,"width":30.0,"mfd":4.5,"posTol":0,"covTurns":10,"coreOd":9,"offset":1,"margin":1.2,"canId":32,"density":1.41,"htAbove":2,"dia":22,"wtKg":0.00825,"length":51.21717471017444,"turns":533,"coverWtKg":0.0004510367345942538,"saMfd":162.56281368445744,"coreWt":0.8,"totalWt":0.8087010367345943,"resinG":24.956814009098114,"codeId":"4.5_6X30_35X52_PP"},{"thick":5.9,"width":30.0,"mfd":5.0,"posTol":0,"covTurns":10,"coreOd":9,"offset":1,"margin":1.2,"canId":32,"density":1.41,"htAbove":2,"dia":23,"wtKg":0.00917,"length":56.90797190019382,"turns":574,"coverWtKg":0.00047109798248289866,"saMfd":159.7368136844574,"coreWt":0.8,"totalWt":0.809641097982483,"resinG":23.25251130344235,"codeId":"5_6X30_35X52_PP"},{"thick":5.9,"width":30.0,"mfd":6.0,"posTol":0,"covTurns":10,"coreOd":9,"offset":1,"margin":1.2,"canId":32,"density":1.41,"htAbove":2,"dia":24.8,"wtKg":0.011,"length":68.28956628023259,"turns":652,"coverWtKg":0.0005088338540187397,"saMfd":155.49781368445744,"coreWt":0.8,"totalWt":0.8115088338540187,"resinG":19.843905892130827,"codeId":"6_6X30_35X52_PP"},{"thick":5.9,"width":30.0,"mfd":7.0,"posTol":0,"covTurns":10,"coreOd":9,"offset":1,"margin":1.2,"canId":32,"density":1.41,"htAbove":2,"dia":26.5,"wtKg":0.01283,"length":79.67116066027135,"turns":723,"coverWtKg":0.0005439381212396258,"saMfd":152.46995654160028,"coreWt":0.8,"totalWt":0.8133739381212397,"resinG":16.435300480819294,"codeId":"7_6X30_35X52_PP"},{"thick":5.9,"width":30.0,"mfd":8.0,"posTol":0,"covTurns":10,"coreOd":9,"offset":1,"margin":1.2,"canId":32,"density":1.41,"htAbove":2,"dia":28.1,"wtKg":0.01467,"length":91.05275504031012,"turns":791,"coverWtKg":0.0005768948640312624,"saMfd":150.19906368445743,"coreWt":0.8,"totalWt":0.8152468948640313,"resinG":13.026695069507767,"codeId":"8_6X30_35X52_PP"},{"thick":5.9,"width":30.0,"mfd":8.0,"posTol":0,"covTurns":10,"coreOd":9,"offset":1,"margin":1.2,"canId":32,"density":1.41,"htAbove":2,"dia":28.1,"wtKg":0.01467,"length":91.05275504031012,"turns":791,"coverWtKg":0.0005768948640312624,"saMfd":150.19906368445743,"coreWt":0.8,"totalWt":0.8152468948640313,"resinG":13.026695069507767,"codeId":"8_6X30_35X72_PP"},{"thick":5.9,"width":30.0,"mfd":10.0,"posTol":0,"covTurns":10,"coreOd":9,"offset":1,"margin":1.2,"canId":32,"density":1.41,"htAbove":2,"dia":31,"wtKg":0.01833,"length":113.81594380038764,"turns":915,"coverWtKg":0.0006376858725868594,"saMfd":147.01981368445746,"coreWt":0.8,"totalWt":0.818967685872587,"resinG":6.209484246884706,"codeId":"10_6X30_35X52_PP"},{"thick":5.9,"width":30.0,"mfd":10.0,"posTol":0,"covTurns":10,"coreOd":9,"offset":1,"margin":1.2,"canId":32,"density":1.41,"htAbove":2,"dia":31,"wtKg":0.01833,"length":113.81594380038764,"turns":915,"coverWtKg":0.0006376858725868594,"saMfd":147.01981368445746,"coreWt":0.8,"totalWt":0.818967685872587,"resinG":6.209484246884706,"codeId":"10_6X30_35X72_PP"},{"thick":5.4,"width":37.5,"mfd":12.5,"posTol":0,"covTurns":10,"coreOd":9,"offset":1,"margin":1.2,"canId":32,"density":1.41,"htAbove":2,"dia":28.3,"wtKg":0.01872,"length":101.57389884864855,"turns":876,"coverWtKg":0.0007278128726482845,"saMfd":97.93344860523236,"coreWt":1,"totalWt":1.0194478128726483,"resinG":14.887109347487542,"codeId":"12.5_5.5X37.5_35X52_PP"},{"thick":5.4,"width":37.5,"mfd":12.5,"posTol":0,"covTurns":10,"coreOd":9,"offset":1,"margin":1.2,"canId":32,"density":1.41,"htAbove":2,"dia":28.3,"wtKg":0.01872,"length":101.57389884864855,"turns":876,"coverWtKg":0.0007278128726482845,"saMfd":97.93344860523236,"coreWt":1,"totalWt":1.0194478128726483,"resinG":14.887109347487542,"codeId":"12.5_5.5X37.5_35X72_PP"},{"thick":5.4,"width":37.5,"mfd":15.0,"posTol":0,"covTurns":10,"coreOd":9,"offset":1,"margin":1.2,"canId":32,"density":1.41,"htAbove":2,"dia":30.7,"wtKg":0.02246,"length":121.88867861837826,"turns":987,"coverWtKg":0.0007899022455806811,"saMfd":96.23784860523236,"coreWt":1,"totalWt":1.0232499022455808,"resinG":7.926656354985056,"codeId":"15_5.5X37.5_35X72_PP"},{"thick":5.4,"width":37.5,"mfd":15.0,"posTol":0,"covTurns":10,"coreOd":9,"offset":1,"margin":1.2,"canId":37,"density":1.41,"htAbove":2,"dia":30.7,"wtKg":0.02246,"length":121.88867861837826,"turns":987,"coverWtKg":0.0007899022455806811,"saMfd":96.23784860523236,"coreWt":1,"totalWt":1.0232499022455808,"resinG":26.026974404985054,"codeId":"15_5.5X37.5_40X72_PP"},{"thick":5.4,"width":37.5,"mfd":18.0,"posTol":0,"covTurns":10,"coreOd":9,"offset":1,"margin":1.2,"canId":37,"density":1.41,"htAbove":2,"dia":33.4,"wtKg":0.02695,"length":146.26641434205393,"turns":1110,"coverWtKg":0.000858466548139198,"saMfd":94.82484860523238,"coreWt":1,"totalWt":1.0278084665481393,"resinG":17.674430813982053,"codeId":"18_5.5X37.5_40X72_PP"},{"thick":5.4,"width":37.5,"mfd":20.0,"posTol":0,"covTurns":10,"coreOd":9,"offset":1,"margin":1.2,"canId":37,"density":1.41,"htAbove":2,"dia":35,"wtKg":0.02995,"length":162.5182381578377,"turns":1186,"coverWtKg":0.0009012662558302676,"saMfd":94.11834860523234,"coreWt":1,"totalWt":1.0308512662558302,"resinG":12.106068419980062,"codeId":"20_5.5X37.5_40X72_PP"},{"thick":5.4,"width":30.0,"mfd":20.0,"posTol":0,"covTurns":10,"coreOd":9,"offset":1,"margin":1.2,"canId":42,"density":1.41,"htAbove":2,"dia":39.3,"wtKg":0.03071,"length":208.34104966850617,"turns":1385,"coverWtKg":0.0008097554160406448,"saMfd":118.86266682099335,"coreWt":0.8,"totalWt":0.8315197554160407,"resinG":14.640672881663773,"codeId":"20_5.5X30_45X95_PP"},{"thick":5.4,"width":50.0,"mfd":25.0,"posTol":0,"covTurns":10,"coreOd":9,"offset":1,"margin":1.2,"canId":37,"density":1.41,"htAbove":2,"dia":33.6,"wtKg":0.03652,"length":148.65536269265735,"turns":1121,"coverWtKg":0.0011531886870684265,"saMfd":69.30591668322798,"coreWt":1.3333333333333335,"totalWt":1.371006522020402,"resinG":21.262318467486406,"codeId":"25_5.5X50_40X95_PP"},{"thick":5.4,"width":37.5,"mfd":25.0,"posTol":0,"covTurns":10,"coreOd":9,"offset":1,"margin":1.2,"canId":42,"density":1.41,"htAbove":2,"dia":38.9,"wtKg":0.03744,"length":203.1477976972971,"turns":1363,"coverWtKg":0.001000243945941578,"saMfd":92.84664860523236,"coreWt":1,"totalWt":1.0384402439459415,"resinG":18.90871498497509,"codeId":"25_5.5X37.5_45X95_PP"},{"thick":5.4,"width":60.0,"mfd":30.0,"posTol":0,"covTurns":10,"coreOd":9,"offset":1,"margin":1.2,"canId":37,"density":1.41,"htAbove":2,"dia":33.4,"wtKg":0.0433,"length":146.86939720447697,"turns":1113,"coverWtKg":0.0013761484777782766,"saMfd":57.111982993611704,"coreWt":1.6,"totalWt":1.6446761484777783,"resinG":25.766529457328076,"codeId":"30_5.5X60_40X95_PP"},{"thick":5.4,"width":50.0,"mfd":30.0,"posTol":0,"covTurns":10,"coreOd":9,"offset":1,"margin":1.2,"canId":42,"density":1.41,"htAbove":2,"dia":36.6,"wtKg":0.04383,"length":178.38643523118878,"turns":1258,"coverWtKg":0.001254892320623602,"saMfd":68.45811668322796,"coreWt":1.3333333333333335,"totalWt":1.378418225653957,"resinG":34.961614088983694,"codeId":"30_5.5X50_45X95_PP"},{"thick":5.4,"width":60.0,"mfd":36.0,"posTol":0,"covTurns":10,"coreOd":9,"offset":1,"margin":1.2,"canId":37,"density":1.41,"htAbove":2,"dia":36.4,"wtKg":0.05196,"length":176.2432766453724,"turns":1248,"coverWtKg":0.001497407801249879,"saMfd":56.40548299361173,"coreWt":1.6,"totalWt":1.65345740780125,"resinG":9.663533756793674,"codeId":"36_5.5X60_40X95_PP"},{"thick":5.4,"width":50.0,"mfd":36.0,"posTol":0,"covTurns":10,"coreOd":9,"offset":1,"margin":1.2,"canId":42,"density":1.41,"htAbove":2,"dia":39.8,"wtKg":0.0526,"length":214.06372227742656,"turns":1408,"coverWtKg":0.0013669343025944608,"saMfd":67.75161668322797,"coreWt":1.3333333333333335,"totalWt":1.3873002676359278,"resinG":18.662802274780443,"codeId":"36_5.5X50_45X95_PP"},{"thick":5.4,"width":50.0,"mfd":36.0,"posTol":0,"covTurns":10,"coreOd":9,"offset":1,"margin":1.2,"canId":42,"density":1.41,"htAbove":2,"dia":39.8,"wtKg":0.0526,"length":214.06372227742656,"turns":1408,"coverWtKg":0.0013669343025944608,"saMfd":67.75161668322797,"coreWt":1.3333333333333335,"totalWt":1.3873002676359278,"resinG":18.662802274780443,"codeId":"36_5.5X50_45X120_PP"},{"thick":5.4,"width":60.0,"mfd":40.0,"posTol":0,"covTurns":10,"coreOd":9,"offset":1,"margin":1.2,"canId":42,"density":1.41,"htAbove":2,"dia":38.2,"wtKg":0.05774,"length":195.82586293930265,"turns":1333,"coverWtKg":0.0015730355353304004,"saMfd":56.05223299361173,"coreWt":1.6,"totalWt":1.6593130355353305,"resinG":31.45631108977076,"codeId":"40_5.5X60_45X95_PP"},{"thick":5.4,"width":75.0,"mfd":45.0,"posTol":0,"covTurns":10,"coreOd":9,"offset":1,"margin":1.2,"canId":42,"density":1.41,"htAbove":2,"dia":36.2,"wtKg":0.06418,"length":174.15100310977792,"turns":1239,"coverWtKg":0.0018613738719832917,"saMfd":44.622240746346705,"coreWt":2,"totalWt":2.0660413738719834,"resinG":53.00181326899356,"codeId":"45_5.5X75_45X95_PP"},{"thick":5.4,"width":75.0,"mfd":45.0,"posTol":0,"covTurns":10,"coreOd":9,"offset":1,"margin":1.2,"canId":42,"density":1.41,"htAbove":2,"dia":36.2,"wtKg":0.06418,"length":174.15100310977792,"turns":1239,"coverWtKg":0.0018613738719832917,"saMfd":44.622240746346705,"coreWt":2,"totalWt":2.0660413738719834,"resinG":53.00181326899356,"codeId":"45_5.5X75_45X120_PP"},{"thick":5.4,"width":75.0,"mfd":50.0,"posTol":0,"covTurns":10,"coreOd":9,"offset":1,"margin":1.2,"canId":42,"density":1.41,"htAbove":2,"dia":38,"wtKg":0.07131,"length":193.50111456641991,"turns":1323,"coverWtKg":0.001955312103847975,"saMfd":44.3396407463467,"coreWt":2,"totalWt":2.073265312103848,"resinG":39.74195589221507,"codeId":"50_5.5X75_45X95_PP"},{"thick":5.4,"width":75.0,"mfd":50.0,"posTol":0,"covTurns":10,"coreOd":9,"offset":1,"margin":1.2,"canId":42,"density":1.41,"htAbove":2,"dia":38,"wtKg":0.07131,"length":193.50111456641991,"turns":1323,"coverWtKg":0.001955312103847975,"saMfd":44.3396407463467,"coreWt":2,"totalWt":2.073265312103848,"resinG":39.74195589221507,"codeId":"50_5.5X75_45X120_PP"},{"thick":5.4,"width":75.0,"mfd":60.0,"posTol":0,"covTurns":10,"coreOd":9,"offset":1,"margin":1.2,"canId":42,"density":1.41,"htAbove":2,"dia":41.4,"wtKg":0.08558,"length":232.20133747970388,"turns":1480,"coverWtKg":0.002130740050408438,"saMfd":43.915740746346714,"coreWt":2,"totalWt":2.0877107400504085,"resinG":13.222241138658068,"codeId":"60_5.5X75_45X95_PP"},{"thick":5.4,"width":75.0,"mfd":60.0,"posTol":0,"covTurns":10,"coreOd":9,"offset":1,"margin":1.2,"canId":42,"density":1.41,"htAbove":2,"dia":41.4,"wtKg":0.08558,"length":232.20133747970388,"turns":1480,"coverWtKg":0.002130740050408438,"saMfd":43.915740746346714,"coreWt":2,"totalWt":2.0877107400504085,"resinG":13.222241138658068,"codeId":"60_5.5X75_45X120_PP"},{"thick":5.4,"width":75.0,"mfd":72.0,"posTol":0,"covTurns":10,"coreOd":9,"offset":1,"margin":1.2,"canId":47,"density":1.41,"htAbove":2,"dia":45.1,"wtKg":0.10269,"length":278.64160497564467,"turns":1653,"coverWtKg":0.002323759943083866,"saMfd":43.562490746346704,"coreWt":2,"totalWt":2.105013759943084,"resinG":26.910041734389686,"codeId":"72_5.5X75_50X95_PP"},{"thick":5.4,"width":75.0,"mfd":72.0,"posTol":0,"covTurns":10,"coreOd":9,"offset":1,"margin":1.2,"canId":47,"density":1.41,"htAbove":2,"dia":45.1,"wtKg":0.10269,"length":278.64160497564467,"turns":1653,"coverWtKg":0.002323759943083866,"saMfd":43.562490746346704,"coreWt":2,"totalWt":2.105013759943084,"resinG":26.910041734389686,"codeId":"72_5.5X75_50X120_PP"},{"thick":4.4,"width":30.0,"mfd":20.0,"posTol":0,"covTurns":10,"coreOd":9,"offset":1,"margin":1.2,"canId":37,"density":1.41,"htAbove":2,"dia":32.5,"wtKg":0.02039,"length":169.759373803968,"turns":1314,"coverWtKg":0.0006693957685789845,"saMfd":81.05262447374594,"coreWt":0.8,"totalWt":0.821059395768579,"resinG":17.044349577126553,"codeId":"20_4.5X30_40X72_PP"},{"thick":3.9,"width":30.0,"mfd":25.0,"posTol":0,"covTurns":10,"coreOd":9,"offset":1,"margin":1.2,"canId":37,"density":1.41,"htAbove":2,"dia":32.3,"wtKg":0.02003,"length":188.08566983962362,"turns":1466,"coverWtKg":0.0006638707438354286,"saMfd":63.76952898996257,"coreWt":0.8,"totalWt":0.8206938707438355,"resinG":17.724895615868757,"codeId":"25_4X30_40X72_PP"},{"thick":3.9,"width":30.0,"mfd":25.0,"posTol":0,"covTurns":10,"coreOd":9,"offset":1,"margin":1.2,"canId":37,"density":1.41,"htAbove":2,"dia":32.3,"wtKg":0.02003,"length":188.08566983962362,"turns":1466,"coverWtKg":0.0006638707438354286,"saMfd":63.76952898996257,"coreWt":0.8,"totalWt":0.8206938707438355,"resinG":17.724895615868757,"codeId":"25_4X30_40X95_PP"},{"thick":4.4,"width":37.5,"mfd":30.0,"posTol":0,"covTurns":10,"coreOd":9,"offset":1,"margin":1.2,"canId":37,"density":1.41,"htAbove":2,"dia":35,"wtKg":0.02982,"length":198.6334021929127,"turns":1452,"coverWtKg":0.0008995453608890138,"saMfd":62.50479797658773,"coreWt":1,"totalWt":1.030719545360889,"resinG":12.33521913578263,"codeId":"30_4.5X37.5_40X95_PP"},{"thick":4.4,"width":30.0,"mfd":30.0,"posTol":0,"covTurns":10,"coreOd":9,"offset":1,"margin":1.2,"canId":42,"density":1.41,"htAbove":2,"dia":39.2,"wtKg":0.03059,"length":254.63906070595198,"turns":1695,"coverWtKg":0.0008081849165360957,"saMfd":78.93312447374592,"coreWt":0.8,"totalWt":0.8313981849165362,"resinG":14.875681585689861,"codeId":"30_4.5X30_45X95_PP"},{"thick":3.9,"width":37.5,"mfd":36.0,"posTol":0,"covTurns":10,"coreOd":9,"offset":1,"margin":1.2,"canId":37,"density":1.41,"htAbove":2,"dia":34,"wtKg":0.02812,"length":211.273709605189,"turns":1579,"coverWtKg":0.0008753610562940516,"saMfd":49.308470414457624,"coreWt":1,"totalWt":1.028995361056294,"resinG":15.508956549647957,"codeId":"36_4X37.5_40X95_PP"},{"thick":3.9,"width":30.0,"mfd":36.0,"posTol":0,"covTurns":10,"coreOd":9,"offset":1,"margin":1.2,"canId":42,"density":1.41,"htAbove":2,"dia":38.2,"wtKg":0.02884,"length":270.84336456905805,"turns":1844,"coverWtKg":0.0007861092017118285,"saMfd":62.215228989962576,"coreWt":0.8,"totalWt":0.8296261092017119,"resinG":18.130552136451005,"codeId":"36_4X30_45X95_PP"},{"thick":3.9,"width":30.0,"mfd":36.0,"posTol":0,"covTurns":10,"coreOd":9,"offset":1,"margin":1.2,"canId":42,"density":1.41,"htAbove":2,"dia":38.2,"wtKg":0.02884,"length":270.84336456905805,"turns":1844,"coverWtKg":0.0007861092017118285,"saMfd":62.215228989962576,"coreWt":0.8,"totalWt":0.8296261092017119,"resinG":18.130552136451005,"codeId":"36_4X30_45X120_PP"},{"thick":4.4,"width":50.0,"mfd":40.0,"posTol":0,"covTurns":10,"coreOd":9,"offset":1,"margin":1.2,"canId":37,"density":1.41,"htAbove":2,"dia":34.6,"wtKg":0.0388,"length":193.80254691783475,"turns":1430,"coverWtKg":0.001185798774121439,"saMfd":45.81581032192367,"coreWt":1.3333333333333335,"totalWt":1.373319132107455,"resinG":17.032974295305173,"codeId":"40_4.5X50_40X95_PP"},{"thick":4.4,"width":37.5,"mfd":40.0,"posTol":0,"covTurns":10,"coreOd":9,"offset":1,"margin":1.2,"canId":42,"density":1.41,"htAbove":2,"dia":40,"wtKg":0.03977,"length":264.844536257217,"turns":1737,"coverWtKg":0.0010291125787504852,"saMfd":61.44504797658775,"coreWt":1,"totalWt":1.0407991125787506,"resinG":14.57394727771017,"codeId":"40_4.5X37.5_45X95_PP"},{"thick":3.9,"width":50.0,"mfd":45.0,"posTol":0,"covTurns":10,"coreOd":9,"offset":1,"margin":1.2,"canId":37,"density":1.41,"htAbove":2,"dia":32.7,"wtKg":0.03429,"length":193.25197150045452,"turns":1491,"coverWtKg":0.0011202610418279031,"saMfd":36.32300839341212,"coreWt":1.3333333333333335,"totalWt":1.3687435943751614,"resinG":25.412478883140047,"codeId":"45_4X50_40X95_PP"},{"thick":3.9,"width":37.5,"mfd":45.0,"posTol":0,"covTurns":10,"coreOd":9,"offset":1,"margin":1.2,"canId":42,"density":1.41,"htAbove":2,"dia":37.7,"wtKg":0.03515,"length":264.0921370064862,"turns":1816,"coverWtKg":0.0009710774302268362,"saMfd":48.60197041445761,"coreWt":1,"totalWt":1.0361210774302267,"resinG":23.162325147059946,"codeId":"45_4X37.5_45X95_PP"},{"thick":3.9,"width":50.0,"mfd":50.0,"posTol":0,"covTurns":10,"coreOd":9,"offset":1,"margin":1.2,"canId":37,"density":1.41,"htAbove":2,"dia":34.3,"wtKg":0.0381,"length":214.72441277828278,"turns":1595,"coverWtKg":0.0011759112530202456,"saMfd":36.040408393412115,"coreWt":1.3333333333333335,"totalWt":1.3726092445863538,"resinG":18.32786160793337,"codeId":"50_4X50_40X95_PP"},{"thick":3.9,"width":37.5,"mfd":50.0,"posTol":0,"covTurns":10,"coreOd":9,"offset":1,"margin":1.2,"canId":42,"density":1.41,"htAbove":2,"dia":39.6,"wtKg":0.03905,"length":293.4357077849847,"turns":1938,"coverWtKg":0.0010203611430557368,"saMfd":48.319370414457616,"coreWt":1,"totalWt":1.0400703611430557,"resinG":15.901111840066608,"codeId":"50_4X37.5_45X95_PP"},{"thick":3.9,"width":37.5,"mfd":50.0,"posTol":0,"covTurns":10,"coreOd":9,"offset":1,"margin":1.2,"canId":42,"density":1.41,"htAbove":2,"dia":39.6,"wtKg":0.03905,"length":293.4357077849847,"turns":1938,"coverWtKg":0.0010203611430557368,"saMfd":48.319370414457616,"coreWt":1,"totalWt":1.0400703611430557,"resinG":15.901111840066608,"codeId":"50_4X37.5_45X120_PP"},{"thick":3.9,"width":50.0,"mfd":60.0,"posTol":0,"covTurns":10,"coreOd":9,"offset":1,"margin":1.2,"canId":42,"density":1.41,"htAbove":2,"dia":37.3,"wtKg":0.04572,"length":257.6692953339394,"turns":1788,"coverWtKg":0.0012799342863212466,"saMfd":35.61650839341212,"coreWt":1.3333333333333335,"totalWt":1.3803332676196547,"resinG":31.440265857520036,"codeId":"60_4X50_45X95_PP"},{"thick":3.9,"width":50.0,"mfd":60.0,"posTol":0,"covTurns":10,"coreOd":9,"offset":1,"margin":1.2,"canId":42,"density":1.41,"htAbove":2,"dia":37.3,"wtKg":0.04572,"length":257.6692953339394,"turns":1788,"coverWtKg":0.0012799342863212466,"saMfd":35.61650839341212,"coreWt":1.3333333333333335,"totalWt":1.3803332676196547,"resinG":31.440265857520036,"codeId":"60_4X50_45X120_PP"},{"thick":3.9,"width":50.0,"mfd":72.0,"posTol":0,"covTurns":10,"coreOd":9,"offset":1,"margin":1.2,"canId":42,"density":1.41,"htAbove":2,"dia":40.6,"wtKg":0.05487,"length":309.20315440072727,"turns":2001,"coverWtKg":0.001394506231235371,"saMfd":35.26325839341213,"coreWt":1.3333333333333335,"totalWt":1.389597839564569,"resinG":14.43718439702402,"codeId":"72_4X50_45X95_PP"},{"thick":3.9,"width":50.0,"mfd":72.0,"posTol":0,"covTurns":10,"coreOd":9,"offset":1,"margin":1.2,"canId":42,"density":1.41,"htAbove":2,"dia":40.6,"wtKg":0.05487,"length":309.20315440072727,"turns":2001,"coverWtKg":0.001394506231235371,"saMfd":35.26325839341213,"coreWt":1.3333333333333335,"totalWt":1.389597839564569,"resinG":14.43718439702402,"codeId":"72_4X50_45X95_PP"},{"thick":3.9,"width":50.0,"mfd":72.0,"posTol":0,"covTurns":10,"coreOd":9,"offset":1,"margin":1.2,"canId":42,"density":1.41,"htAbove":2,"dia":40.6,"wtKg":0.05487,"length":309.20315440072727,"turns":2001,"coverWtKg":0.001394506231235371,"saMfd":35.26325839341213,"coreWt":1.3333333333333335,"totalWt":1.389597839564569,"resinG":14.43718439702402,"codeId":"72_4X50_45X120_PP"}];
+
+        function getWindingResults(finMfd, mfdRaw, thickness, width, margin, offset, coreOd, covTurns, activeWidthOverride) {
+            const activeWidth = (activeWidthOverride !== undefined && activeWidthOverride !== null) ? activeWidthOverride : (width - (2 * margin) - offset);
+            if (activeWidth <= 0 || width === 0) return null;
+            const length_m = (finMfd * thickness * EXACT_CONSTANT) / activeWidth;
+            const vol_m3 = length_m * (width / 1000) * (thickness / 1000000);
+            const weightElement = vol_m3 * 910000;
+            const coreVol_m3 = 3.14 * Math.pow(coreOd / 2000, 2) * (width / 1000);
+            const totalVol_m3 = vol_m3 + coreVol_m3;
+            const radius_mm = Math.sqrt(totalVol_m3 / (3.14 * (width / 1000))) * 1000;
+            const dia_mm = radius_mm * 2;
+            const noOfTurns = (radius_mm - (coreOd / 2)) / ((thickness * 2) / 1000);
+            const coverThickness_mm = (covTurns * 20) / 1000; // radial
+            const coverDiaDelta_mm = 2 * coverThickness_mm;   // diametrical addition (was hardcoded to 0.4, now tracks Cover Turns input)
+            const coverVol_mm3 = 3.14 * (dia_mm + coverThickness_mm) * width * coverThickness_mm;
+            const coverFilmWeight = coverVol_mm3 * COVER_DENSITY_INV;
+            const sa = 2 * 3.14 * (radius_mm * radius_mm);
+            // SA/MFD divides by Fin.MFD (matches Excel's B23=B22/B7), not the raw pre-tolerance MFD -
+            // previously divided by mfdRaw, which only matched Excel when Pos Tol % was 0.
+            return { length_m, weightElement, diaInclCover: dia_mm + coverDiaDelta_mm, dia_mm, noOfTurns, coverFilmWeight, saMfd: sa / finMfd, totalVol_cm3: totalVol_m3 * 1000000 };
+        }
+
+        function getTcwResults(mfd1, mfd2, mfd3, thick, width, margin, offset, coreOd, covTurns, scheme) {
+            const activeWidth = width - (2 * margin) - offset;
+            if (activeWidth <= 0 || width === 0) return null;
+
+            // Per-stage cover deltas, matched exactly to the source Excel sheets:
+            //   TCW MFD sheet  -> 0.5 / 0.5 / 0.5 mm per stage
+            //   TCW KVAr sheet -> 0.8 / 0.8 / 1.5 mm per stage (thicker final outer wrap)
+            const covers = scheme === 'kvar' ? [0.8, 0.8, 1.5] : [0.5, 0.5, 0.5];
+
+            const len1 = (mfd1 * thick * EXACT_CONSTANT) / activeWidth;
+            const vol1 = len1 * (width / 1000) * (thick / 1000000);
+            const wt1 = vol1 * 910000;
+            const coreVol1 = 3.14 * Math.pow(coreOd / 2000, 2) * (width / 1000);
+            const rad1 = Math.sqrt((vol1 + coreVol1) / (3.14 * (width / 1000))) * 1000;
+            const dia1_covered = (rad1 * 2) + covers[0];
+            const turns1 = (rad1 - (coreOd / 2)) / ((thick * 2) / 1000);
+
+            const coreVol2 = 3.14 * Math.pow(dia1_covered / 2000, 2) * (width / 1000);
+            const len2 = (mfd2 * thick * EXACT_CONSTANT) / activeWidth;
+            const vol2 = len2 * (width / 1000) * (thick / 1000000);
+            const wt2 = vol2 * 910000;
+            const rad2 = Math.sqrt((vol2 + coreVol2) / (3.14 * (width / 1000))) * 1000;
+            const dia2_covered = (rad2 * 2) + covers[1];
+            const turns2 = (rad2 - (dia1_covered / 2)) / ((thick * 2) / 1000);
+
+            const coreVol3 = 3.14 * Math.pow(dia2_covered / 2000, 2) * (width / 1000);
+            const len3 = (mfd3 * thick * EXACT_CONSTANT) / activeWidth;
+            const vol3 = len3 * (width / 1000) * (thick / 1000000);
+            const wt3 = vol3 * 910000;
+            const rad3 = Math.sqrt((vol3 + coreVol3) / (3.14 * (width / 1000))) * 1000;
+            const dia3_covered = (rad3 * 2) + covers[2];
+            const turns3 = (rad3 - (dia2_covered / 2)) / ((thick * 2) / 1000);
+
+            // Optional extra outer-tape wrap from the Cover Turns input. Kept as an informational
+            // figure only (NOT added into totalWt/finalPhysicalDia) because the source sheet's own
+            // final-stage cover constant above already represents the outer wrap for this module -
+            // adding both would double-count the same physical layer.
+            const coverThick = (covTurns * 20) / 1000;
+            const coverWt = (3.14 * (dia3_covered + coverThick) * width * coverThick) * COVER_DENSITY_INV;
+
+            return {
+                lens: [len1, len2, len3], dias: [dia1_covered, dia2_covered, dia3_covered],
+                turns: [turns1, turns2, turns3], wts: [wt1, wt2, wt3], coverWt,
+                finalPhysicalDia: dia3_covered,
+                totalTurns: turns1 + turns2 + turns3, totalWt: wt1 + wt2 + wt3
+            };
+        }
+
+        // --- SHARED PURE FUNCTIONS ---
+        // Extracted so kVAr<->uF logic has ONE implementation instead of being duplicated across
+        // the kVAr tab and TCW-KVAr tab (that duplication is exactly the pattern that caused real
+        // divergent bugs earlier - these are also what the self-test suite below validates against).
+        function calcKvarToMfd(kvarIn, vIn, freq1, phase) {
+            if (!vIn || !freq1) return { mfdEach: 0, mfdTotal: 0, currentAmp: 0 };
+            let mfdEach, mfdTotal, currentAmp;
+            if (phase === 3) {
+                mfdEach = (KVAR_LEGACY_CONST * kvarIn) / (freq1 * Math.pow(vIn, 2) * 3);
+                mfdEach = Math.round(mfdEach * 100) / 100; // Excel bakes ROUND(...,2) into this cell before it's reused
+                mfdTotal = mfdEach * 1.5;
+                currentAmp = (kvarIn * 1000) / (1.732 * vIn);
+            } else {
+                mfdEach = (KVAR_LEGACY_CONST * kvarIn) / (freq1 * Math.pow(vIn, 2));
+                mfdEach = Math.round(mfdEach * 100) / 100;
+                mfdTotal = mfdEach;
+                currentAmp = (kvarIn * 1000) / vIn;
+            }
+            return { mfdEach, mfdTotal, currentAmp };
+        }
+
+        function calcMfdToKvar(mfdTotalIn, freq2, vOut, phase) {
+            if (!freq2 || !mfdTotalIn || !vOut) return 0;
+            return phase === 3
+                ? (mfdTotalIn * freq2 * Math.pow(vOut, 2) * 3) / (KVAR_LEGACY_CONST * 1.5)
+                : (mfdTotalIn * freq2 * Math.pow(vOut, 2)) / KVAR_LEGACY_CONST;
+        }
+
+        function calcResin(voidSpace, density, ratio) {
+            // Excel's "Cap + Resin" sheet: Resin (Part A) = void*density directly, Hardener is
+            // added ON TOP of that - it does not split a pre-summed total.
+            const resinPartA = voidSpace * density;
+            const hardener = resinPartA * (ratio / 100);
+            const totalMix = resinPartA + hardener;
+            return { resinPartA, hardener, totalMix };
+        }
+
+        function calcCoreWeightFromWidth(width) {
+            return (2 / 75) * width; // Excel: Weight of Core = (2/75)*Width
+        }
+
+        // --- TAB 1 LOGIC (Cap Formula) ---
+        function calculateM1() {
+            const mfd = parseFloat(document.getElementById('m1_mfd').value) || 0;
+            const posTol = parseFloat(document.getElementById('m1_posTol').value) || 0;
+            const finMfd = mfd * (1 + (posTol / 100));
+            document.getElementById('m1_finMfd').value = finMfd.toFixed(2);
+
+            const res = getWindingResults(finMfd, mfd,
+                parseFloat(document.getElementById('m1_thick').value)||0,
+                parseFloat(document.getElementById('m1_width').value)||0,
+                parseFloat(document.getElementById('m1_margin').value)||0,
+                parseFloat(document.getElementById('m1_offset').value)||0,
+                parseFloat(document.getElementById('m1_coreOd').value)||0,
+                parseFloat(document.getElementById('m1_covTurns').value)||0
+            );
+
+            if(!res) { updateWindingDiagram(null, 0); return; }
+            // Excel: Weight of Core = (2/75)*Width (E9 = (2/75)*B4) - was previously hardcoded to
+            // 0.8g (only correct when Width=30mm), now tracks the actual Width input.
+            const width = parseFloat(document.getElementById('m1_width').value) || 0;
+            const coreWt = calcCoreWeightFromWidth(width);
+            const totalWt = res.weightElement + res.coverFilmWeight + coreWt;
+
+            document.getElementById('m1_res_length').innerText = res.length_m.toFixed(3);
+            document.getElementById('m1_res_wtEle').innerText = res.weightElement.toFixed(3);
+            document.getElementById('m1_res_dia').innerText = res.diaInclCover.toFixed(3);
+            document.getElementById('m1_res_turns').innerText = res.noOfTurns.toFixed(3);
+            document.getElementById('m1_res_covWt').innerText = res.coverFilmWeight.toFixed(3);
+            document.getElementById('m1_res_sa').innerText = res.saMfd.toFixed(3);
+            document.getElementById('m1_res_coreWt').innerText = coreWt.toFixed(3);
+            document.getElementById('m1_res_totalWt').innerText = totalWt.toFixed(3);
+            document.getElementById('m1_eleVol').value = res.totalVol_cm3.toFixed(2);
+
+            const canId = parseFloat(document.getElementById('m1_canId').value)||0;
+            const htAbove = parseFloat(document.getElementById('m1_htAbove').value)||0;
+            const density = parseFloat(document.getElementById('m1_density').value)||0;
+            const ratio = parseFloat(document.getElementById('m1_ratio').value)||0;
+            
+            const fillHeight = parseFloat(document.getElementById('m1_width').value) + htAbove;
+            const canVol = 3.14 * Math.pow((canId/20), 2) * (fillHeight/10);
+            let voidSpace = Math.max(0, canVol - res.totalVol_cm3);
+            const { resinPartA, hardener, totalMix } = calcResin(voidSpace, density, ratio);
+
+            document.getElementById('m1_res_canVol').innerText = canVol.toFixed(2);
+            document.getElementById('m1_res_void').innerText = voidSpace.toFixed(2);
+            document.getElementById('m1_res_totalMix').innerText = totalMix.toFixed(2) + " g";
+            document.getElementById('m1_res_hardener').innerText = hardener.toFixed(2) + " g";
+            document.getElementById('m1_res_resin').innerText = resinPartA.toFixed(2) + " g";
+
+            document.getElementById('m1_canId_echo').innerText = document.getElementById('m1_canId').value || '—';
+            document.getElementById('m1_clearance_echo').innerText = document.getElementById('m1_clearance').value || '6';
+            canFitCheck(res.diaInclCover, 'm1_canId', 'm1_clearance', 6, 'm1_res_canFit');
+
+            updateWindingDiagram(res, parseFloat(document.getElementById('m1_coreOd').value) || 0);
+        }
+
+        // --- TAB 2 LOGIC (kVAr Tab) ---
+        function calculateM2_Left() {
+            const kvarIn = parseFloat(document.getElementById('m2_kvar').value)||0;
+            const vIn = parseFloat(document.getElementById('m2_vin').value)||0;
+            const freq1 = parseFloat(document.getElementById('m2_freq1').value)||0;
+            const phase = parseInt(document.getElementById('m2_phase').value)||3;
+
+            if (!vIn || !freq1) {
+                document.getElementById('m2_res_mfdEach').innerText = "0.00";
+                document.getElementById('m2_res_mfdTotal').innerText = "0.00";
+                document.getElementById('m2_res_amps').innerText = "0.00";
+                return;
+            }
+
+            const { mfdEach, mfdTotal, currentAmp } = calcKvarToMfd(kvarIn, vIn, freq1, phase);
+
+            document.getElementById('m2_res_mfdEach').innerText = mfdEach.toFixed(2);
+            document.getElementById('m2_res_mfdTotal').innerText = mfdTotal.toFixed(2);
+            document.getElementById('m2_res_amps').innerText = currentAmp.toFixed(2);
+            document.getElementById('m2_mfdIn').value = mfdTotal.toFixed(2);
+            
+            calculateM2_Right();
+            document.getElementById('m2_w_mfd').value = mfdEach.toFixed(2);
+            calculateM2Winding();
+        }
+
+        function calculateM2_Right() {
+            const freq2 = parseFloat(document.getElementById('m2_freq2').value)||0;
+            const mfdTotalIn = parseFloat(document.getElementById('m2_mfdIn').value)||0;
+            const vOut = parseFloat(document.getElementById('m2_vout').value)||0;
+            const phase = parseInt(document.getElementById('m2_phase').value)||3;
+            if (!freq2 || !mfdTotalIn || !vOut) {
+                document.getElementById('m2_res_kvarOut').innerText = "0.000";
+                return;
+            }
+            const kvarOut = calcMfdToKvar(mfdTotalIn, freq2, vOut, phase);
+            document.getElementById('m2_res_kvarOut').innerText = kvarOut.toFixed(3);
+        }
+
+        function calculateM2Winding() {
+            const mfdBase = parseFloat(document.getElementById('m2_w_mfd').value) || 0; // Excel B6/B9 equivalent
+            const filmType = document.getElementById('m2_filmType').value; // 'SERIES' or 'SLOPE/WC'
+            const posTol = parseFloat(document.getElementById('m2_w_posTol').value) || 0;
+            const coreWt = parseFloat(document.getElementById('m2_w_coreWt').value) || 0;
+            const width = parseFloat(document.getElementById('m2_w_width').value) || 0;
+
+            // Excel: MFD =IF(B9="",IF(B12="SERIES",B6*4,B6),IF(B12="SERIES",B9*4,B9))
+            const mfdAdjusted = filmType === 'SERIES' ? mfdBase * 4 : mfdBase;
+            // Excel: Fin.MFD = MFD*(1+PosTol/100), applied AFTER the film-type multiplier
+            const finMfd = mfdAdjusted * (1 + (posTol / 100));
+            document.getElementById('m2_w_finMfd').value = finMfd.toFixed(2);
+
+            // Excel: Length uses (Width - IF(SERIES,13.5,6.5)) as the active width - no separate
+            // margin/offset inputs for this sheet's winding section.
+            const activeWidth = width - (filmType === 'SERIES' ? 13.5 : 6.5);
+
+            const res = getWindingResults(finMfd, mfdAdjusted,
+                parseFloat(document.getElementById('m2_w_thick').value)||0,
+                width,
+                0, 0, // margin/offset unused - activeWidth override supplied instead
+                parseFloat(document.getElementById('m2_w_coreOd').value)||0,
+                parseFloat(document.getElementById('m2_w_covTurns').value)||0,
+                activeWidth
+            );
+
+            if(!res) return;
+            document.getElementById('m2_res_len').innerText = res.length_m.toFixed(3);
+            document.getElementById('m2_res_wtEle').innerText = res.weightElement.toFixed(3);
+            document.getElementById('m2_res_dia').innerText = res.diaInclCover.toFixed(3);
+            document.getElementById('m2_res_turns').innerText = res.noOfTurns.toFixed(3);
+            document.getElementById('m2_res_covWt').innerText = res.coverFilmWeight.toFixed(3);
+            document.getElementById('m2_res_sa').innerText = res.saMfd.toFixed(3);
+            document.getElementById('m2_res_totalWt').innerText = (res.weightElement + res.coverFilmWeight + coreWt).toFixed(3);
+            document.getElementById('m2_clearance_echo').innerText = document.getElementById('m2_w_clearance').value || '9';
+            canFitCheck(res.diaInclCover, 'm2_w_canDia', 'm2_w_clearance', 9, 'm2_res_canFit');
+        }
+
+
+        // --- TAB 3 LOGIC (DCW Module) ---
+        function calculateM3() {
+            const mfd1 = parseFloat(document.getElementById('m3_mfd1').value) || 0;
+            const mfd2 = parseFloat(document.getElementById('m3_mfd2').value) || 0;
+            const posTol = parseFloat(document.getElementById('m3_posTol').value) || 0;
+            const finMfd1 = mfd1 * (1 + (posTol / 100));
+            const finMfd2 = mfd2 * (1 + (posTol / 100));
+            document.getElementById('m3_finMfd1').value = finMfd1.toFixed(2);
+            document.getElementById('m3_finMfd2').value = finMfd2.toFixed(2);
+
+            const thick = parseFloat(document.getElementById('m3_thick').value) || 0;
+            const width = parseFloat(document.getElementById('m3_width').value) || 0;
+            const margin = parseFloat(document.getElementById('m3_margin').value) || 0;
+            const offset = parseFloat(document.getElementById('m3_offset').value) || 0;
+            const coreOd = parseFloat(document.getElementById('m3_coreOd').value) || 0;
+            const coreWt = parseFloat(document.getElementById('m3_coreWt').value) || 0;
+            const covTurns = parseFloat(document.getElementById('m3_covTurns').value) || 0;
+
+            const activeWidth = width - (2 * margin) - offset;
+            if (activeWidth <= 0 || width === 0) return;
+
+            const len1 = (finMfd1 * thick * EXACT_CONSTANT) / activeWidth;
+            const vol1 = len1 * (width / 1000) * (thick / 1000000);
+            const wt1 = vol1 * 910000;
+            const coreVol1 = 3.14 * Math.pow(coreOd / 2000, 2) * (width / 1000);
+            const rad1 = Math.sqrt((vol1 + coreVol1) / (3.14 * (width / 1000))) * 1000;
+            const dia1 = rad1 * 2;
+            const turns1 = (rad1 - (coreOd / 2)) / ((thick * 2) / 1000);
+
+            const dia1_covered = dia1 + 0.5; 
+            const coreVol2 = 3.14 * Math.pow(dia1_covered / 2000, 2) * (width / 1000);
+
+            const len2 = (finMfd2 * thick * EXACT_CONSTANT) / activeWidth;
+            const vol2 = len2 * (width / 1000) * (thick / 1000000);
+            const wt2 = vol2 * 910000;
+            const rad2 = Math.sqrt((vol2 + coreVol2) / (3.14 * (width / 1000))) * 1000;
+            const dia2 = rad2 * 2;
+            const turns2 = (rad2 - (dia1_covered / 2)) / ((thick * 2) / 1000);
+
+            const coverThick = (covTurns * 20) / 1000;
+            const coverVol = 3.14 * (dia2 + coverThick) * width * coverThick;
+            // Informational only - the DCW sheet's own +0.5mm final cover step (below) already
+            // represents the outer wrap, so this Cover-Turns estimate is excluded from Total Wt
+            // to avoid double-counting the same physical layer.
+            const coverWt = coverVol * COVER_DENSITY_INV;
+            const finalPhysicalDia = dia2 + 0.5; // matches DCW sheet's own final cover step exactly
+
+            document.getElementById('m3_res_lens').innerText = `${len1.toFixed(3)} / ${len2.toFixed(3)} m`;
+            document.getElementById('m3_res_dias').innerText = `${dia1_covered.toFixed(1)} / ${finalPhysicalDia.toFixed(1)} mm`;
+            document.getElementById('m3_res_turns').innerText = `${Math.round(turns1)} / ${Math.round(turns2)}`;
+            document.getElementById('m3_res_wts').innerText = `${wt1.toFixed(3)} / ${wt2.toFixed(3)} g`;
+            
+            document.getElementById('m3_res_covWt').innerText = `${coverWt.toFixed(3)} g (est., not in Total)`;
+            document.getElementById('m3_res_totTurns').innerText = Math.round(turns1 + turns2);
+            document.getElementById('m3_res_totDia').innerText = `${finalPhysicalDia.toFixed(2)} mm`;
+            document.getElementById('m3_res_totWt').innerText = `${(wt1 + wt2 + coreWt).toFixed(3)} g`;
+        }
+
+        // --- TAB 4 LOGIC (TCW MFD) ---
+        function calculateTCW_MFD() {
+            const m1 = parseFloat(document.getElementById('m4_mfd1').value)||0;
+            const m2 = parseFloat(document.getElementById('m4_mfd2').value)||0;
+            const m3 = parseFloat(document.getElementById('m4_mfd3').value)||0;
+            const tol = parseFloat(document.getElementById('m4_posTol').value)||0;
+            
+            const coreWt = parseFloat(document.getElementById('m4_coreWt').value)||0;
+
+            const res = getTcwResults(m1*(1+tol/100), m2*(1+tol/100), m3*(1+tol/100),
+                parseFloat(document.getElementById('m4_thick').value)||0,
+                parseFloat(document.getElementById('m4_width').value)||0,
+                parseFloat(document.getElementById('m4_margin').value)||0,
+                parseFloat(document.getElementById('m4_offset').value)||0,
+                parseFloat(document.getElementById('m4_coreOd').value)||0,
+                parseFloat(document.getElementById('m4_covTurns').value)||0,
+                'mfd'
+            );
+            if(!res) return;
+
+            document.getElementById('m4_res_lens').innerText = `${res.lens[0].toFixed(1)} / ${res.lens[1].toFixed(1)} / ${res.lens[2].toFixed(1)}`;
+            document.getElementById('m4_res_dias').innerText = `${res.dias[0].toFixed(1)} / ${res.dias[1].toFixed(1)} / ${res.dias[2].toFixed(1)}`;
+            document.getElementById('m4_res_turns').innerText = `${Math.round(res.turns[0])} / ${Math.round(res.turns[1])} / ${Math.round(res.turns[2])}`;
+            document.getElementById('m4_res_wts').innerText = `${res.wts[0].toFixed(1)} / ${res.wts[1].toFixed(1)} / ${res.wts[2].toFixed(1)}`;
+            
+            document.getElementById('m4_res_totTurns').innerText = Math.round(res.totalTurns);
+            document.getElementById('m4_res_totDia').innerText = `${res.finalPhysicalDia.toFixed(2)} mm`;
+            document.getElementById('m4_res_totWt').innerText = `${(res.totalWt + coreWt).toFixed(3)} g`; 
+        }
+
+        // --- TAB 4 LOGIC (TCW KVAR) ---
+        function calculateM5_Left() {
+            const kvarIn = parseFloat(document.getElementById('m5_kvar').value)||0;
+            const vIn = parseFloat(document.getElementById('m5_vin').value)||0;
+            const freq1 = parseFloat(document.getElementById('m5_freq1').value)||0;
+            
+            if (!vIn || !freq1) {
+                document.getElementById('m5_res_mfdEach').innerText = "0.00";
+                document.getElementById('m5_res_mfdTotal').innerText = "0.00";
+                document.getElementById('m5_mfdIn').value = "0.00";
+                return;
+            }
+
+            const { mfdEach, mfdTotal } = calcKvarToMfd(kvarIn, vIn, freq1, 3); // TCW KVAr panel is always 3-phase
+
+            document.getElementById('m5_res_mfdEach').innerText = mfdEach.toFixed(2);
+            document.getElementById('m5_res_mfdTotal').innerText = mfdTotal.toFixed(2);
+            document.getElementById('m5_mfdIn').value = mfdTotal.toFixed(2);
+            
+            calculateM5_Right();
+            document.getElementById('m5_w_mfd').value = mfdEach.toFixed(2);
+            calculateTCW_KVAR();
+        }
+
+        function calculateM5_Right() {
+            const freq2 = parseFloat(document.getElementById('m5_freq2').value)||0;
+            const mfdTotalIn = parseFloat(document.getElementById('m5_mfdIn').value)||0;
+            const vOut = parseFloat(document.getElementById('m5_vout').value)||0;
+            if (!freq2 || !mfdTotalIn || !vOut) {
+                document.getElementById('m5_res_kvarOut').innerText = "0.000";
+                return;
+            }
+            const kvarOut = calcMfdToKvar(mfdTotalIn, freq2, vOut, 3);
+            document.getElementById('m5_res_kvarOut').innerText = kvarOut.toFixed(3);
+        }
+
+        function calculateTCW_KVAR() {
+            const mfd = parseFloat(document.getElementById('m5_w_mfd').value)||0;
+            const tol = parseFloat(document.getElementById('m5_w_posTol').value)||0;
+            const mfdTarget = mfd * (1 + tol/100);
+            const coreWt = parseFloat(document.getElementById('m5_w_coreWt').value)||0;
+
+            const res = getTcwResults(mfdTarget, mfdTarget, mfdTarget,
+                parseFloat(document.getElementById('m5_w_thick').value)||0,
+                parseFloat(document.getElementById('m5_w_width').value)||0,
+                parseFloat(document.getElementById('m5_w_margin').value)||0,
+                parseFloat(document.getElementById('m5_w_offset').value)||0,
+                parseFloat(document.getElementById('m5_w_coreOd').value)||0,
+                parseFloat(document.getElementById('m5_w_covTurns').value)||0,
+                'kvar'
+            );
+            if(!res) return;
+
+            document.getElementById('m5_res_lens').innerText = `${res.lens[0].toFixed(1)} / ${res.lens[1].toFixed(1)} / ${res.lens[2].toFixed(1)}`;
+            document.getElementById('m5_res_dias').innerText = `${res.dias[0].toFixed(1)} / ${res.dias[1].toFixed(1)} / ${res.dias[2].toFixed(1)}`;
+            document.getElementById('m5_res_turns').innerText = `${Math.round(res.turns[0])} / ${Math.round(res.turns[1])} / ${Math.round(res.turns[2])}`;
+            
+            document.getElementById('m5_res_totTurns').innerText = Math.round(res.totalTurns);
+            document.getElementById('m5_res_totDia').innerText = `${res.finalPhysicalDia.toFixed(2)} mm`;
+            document.getElementById('m5_res_totWt').innerText = `${(res.totalWt + coreWt).toFixed(3)} g`;
+        }
+
+        // --- TAB 5 LOGIC (FLAT ELEMENTS) ---
+        function calculateFlat() {
+            const mfd = parseFloat(document.getElementById('f_mfd').value) || 0;
+            const posTol = parseFloat(document.getElementById('f_posTol').value) || 0;
+            const coreWt = parseFloat(document.getElementById('f_coreWt').value) || 0;
+            const coreOd = parseFloat(document.getElementById('f_coreOd').value) || 0;
+            const width = parseFloat(document.getElementById('f_width').value) || 0;
+
+            const finMfd = mfd * (1 + (posTol / 100));
+            document.getElementById('f_finMfd').value = finMfd.toFixed(2);
+
+            const res = getWindingResults(finMfd, mfd,
+                parseFloat(document.getElementById('f_thick').value)||0,
+                width,
+                parseFloat(document.getElementById('f_margin').value)||0,
+                parseFloat(document.getElementById('f_offset').value)||0,
+                coreOd,
+                parseFloat(document.getElementById('f_covTurns').value)||0
+            );
+
+            if(!res) return;
+
+            document.getElementById('f_res_length').innerText = res.length_m.toFixed(3);
+            document.getElementById('f_res_wtEle').innerText = res.weightElement.toFixed(3);
+            document.getElementById('f_res_dia').innerText = res.diaInclCover.toFixed(3);
+            document.getElementById('f_res_turns').innerText = res.noOfTurns.toFixed(3);
+            document.getElementById('f_res_sa').innerText = res.saMfd.toFixed(3);
+            document.getElementById('f_res_totalWt').innerText = (res.weightElement + res.coverFilmWeight + coreWt).toFixed(3);
+
+            const eleLength = width; 
+            const eleWidth = res.diaInclCover - coreOd;
+            const eleHeight = eleWidth + (3.14 * (coreOd / 2));
+
+            document.getElementById('f_res_eLen').innerText = eleLength.toFixed(2);
+            document.getElementById('f_res_eWid').innerText = eleWidth.toFixed(2);
+            document.getElementById('f_res_eHt').innerText = eleHeight.toFixed(2);
+
+            const boxLength = eleLength + 8;
+            const boxWidth = eleWidth + 4;
+            const boxHeight = eleHeight + 4;
+
+            document.getElementById('f_res_bLen').innerText = boxLength.toFixed(2);
+            document.getElementById('f_res_bWid').innerText = boxWidth.toFixed(2);
+            document.getElementById('f_res_bHt').innerText = boxHeight.toFixed(2);
+
+            document.getElementById('f_clearance_echo').innerText = document.getElementById('f_clearance').value || '6';
+            canFitCheck(res.diaInclCover, 'f_canDia', 'f_clearance', 6, 'f_res_canFit');
+        }
+
+        // --- TAB 6 LOGIC (FORMULA MATRIX) ---
+        function initMatrix() {
+            const tbody = document.getElementById('matrixBody');
+            tbody.innerHTML = '';
+            for(let i=0; i<10; i++) addMatrixRow();
+        }
+
+        function addMatrixRow() {
+            const tbody = document.getElementById('matrixBody');
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td class="in-cell"><input type="number" class="in-val mat-mfd" placeholder="e.g. 5" step="0.1" oninput="calcMatrixRow(this)"></td>
+                <td class="in-cell"><input type="number" class="in-val mat-tol" placeholder="e.g. 0" step="0.1" oninput="calcMatrixRow(this)"></td>
+                <td class="in-cell"><input type="number" class="in-val mat-thick" placeholder="e.g. 6" step="0.1" oninput="calcMatrixRow(this)"></td>
+                <td class="in-cell"><input type="number" class="in-val mat-width" placeholder="e.g. 30" step="0.1" oninput="calcMatrixRow(this)"></td>
+                <td class="in-cell"><input type="number" class="in-val mat-margin" placeholder="e.g. 1.5" step="0.1" oninput="calcMatrixRow(this)"></td>
+                <td class="in-cell"><input type="number" class="in-val mat-offset" placeholder="e.g. 1" step="0.1" oninput="calcMatrixRow(this)"></td>
+                <td class="in-cell"><input type="number" class="in-val mat-coreOd" placeholder="e.g. 9" step="0.1" oninput="calcMatrixRow(this)"></td>
+                <td class="in-cell"><input type="number" class="in-val mat-coreWt" placeholder="e.g. 0.8" step="0.1" oninput="calcMatrixRow(this)"></td>
+                <td class="in-cell"><input type="number" class="in-val mat-covTurns" placeholder="e.g. 10" step="1" oninput="calcMatrixRow(this)"></td>
+                
+                <td class="out-cell"><input type="text" class="out-val mat-finMfd" readonly></td>
+                <td class="out-cell"><input type="text" class="out-val mat-len" readonly></td>
+                <td class="out-cell"><input type="text" class="out-val mat-dia" readonly></td>
+                <td class="out-cell"><input type="text" class="out-val mat-turns" readonly></td>
+                <td class="out-cell"><input type="text" class="out-val mat-eleWt" readonly></td>
+                <td class="out-cell"><input type="text" class="out-val mat-covWt" readonly></td>
+                <td class="out-cell"><input type="text" class="out-val mat-sa" readonly></td>
+                <td class="out-cell"><input type="text" class="out-val mat-totWt" readonly></td>
+            `;
+            tbody.appendChild(tr);
+            calcMatrixRow(tr.querySelector('input')); 
+        }
+
+        function calcMatrixRow(elem) {
+            const row = elem.closest('tr');
+            const mfd = parseFloat(row.querySelector('.mat-mfd').value) || 0;
+            const tol = parseFloat(row.querySelector('.mat-tol').value) || 0;
+            const finMfd = mfd * (1 + tol/100);
+            
+            row.querySelector('.mat-finMfd').value = finMfd.toFixed(2);
+
+            const res = getWindingResults(finMfd, mfd,
+                parseFloat(row.querySelector('.mat-thick').value)||0,
+                parseFloat(row.querySelector('.mat-width').value)||0,
+                parseFloat(row.querySelector('.mat-margin').value)||0,
+                parseFloat(row.querySelector('.mat-offset').value)||0,
+                parseFloat(row.querySelector('.mat-coreOd').value)||0,
+                parseFloat(row.querySelector('.mat-covTurns').value)||0
+            );
+
+            if(res) {
+                const coreWt = parseFloat(row.querySelector('.mat-coreWt').value)||0;
+                row.querySelector('.mat-len').value = res.length_m.toFixed(3);
+                row.querySelector('.mat-dia').value = res.diaInclCover.toFixed(3);
+                row.querySelector('.mat-turns').value = res.noOfTurns.toFixed(3);
+                row.querySelector('.mat-eleWt').value = res.weightElement.toFixed(3);
+                row.querySelector('.mat-covWt').value = res.coverFilmWeight.toFixed(3);
+                row.querySelector('.mat-sa').value = res.saMfd.toFixed(3);
+                row.querySelector('.mat-totWt').value = (res.weightElement + res.coverFilmWeight + coreWt).toFixed(3);
+            } else {
+                row.querySelector('.mat-len').value = "Err";
+            }
+        }
+
+        function calculateMatrixAll() {
+            const rows = document.querySelectorAll('#matrixBody tr');
+            rows.forEach(row => calcMatrixRow(row.querySelector('input')));
+        }
+
+        // --- PRINT TICKET LOGIC ---
+        function val(id) {
+            const el = document.getElementById(id);
+            if (!el) return '<span class="pt-blank">—</span>';
+            const v = (el.tagName === 'SELECT') ? el.options[el.selectedIndex].text : el.value;
+            return (v === '' || v === null || v === undefined) ? '<span class="pt-blank">—</span>' : v;
+        }
+        function txt(id) {
+            const el = document.getElementById(id);
+            if (!el) return '—';
+            const t = el.innerText;
+            return (t === '' || t === null) ? '—' : t;
+        }
+        function ptRow(label, value, hl) {
+            return `<tr><td class="pt-key">${label}</td><td${hl ? ' class="pt-hl"' : ''}>${value}</td></tr>`;
+        }
+        function ptSec(title, cls, rows) {
+            return `<div class="pt-section ${cls}">${title}</div><table class="pt-table pt-sec-body">${rows}</table>`;
+        }
+        function ptGrid2(a, b) {
+            return `<div class="pt-grid2">${a}${b || ''}</div>`;
+        }
+        function num(id) {
+            const el = document.getElementById(id);
+            return el ? (parseFloat(el.value) || 0) : 0;
+        }
+        // Print-safe cross-section diagram - hardcoded colors (not CSS vars) so it renders
+        // identically regardless of the app's current theme; mirrors updateWindingDiagram's geometry.
+        function buildPrintDiagram(res, coreOd) {
+            if (!res || !res.diaInclCover) return '';
+            const outerDia = res.diaInclCover, filmDia = res.dia_mm;
+            const cx = 75, cy = 58, maxPx = 48;
+            const scale = maxPx / (outerDia / 2);
+            const rCore = Math.max((coreOd / 2) * scale, 3);
+            const rFilm = Math.max((filmDia / 2) * scale, rCore + 1.5);
+            const rOuter = Math.max((outerDia / 2) * scale, rFilm + 0.8);
+            let guides = '';
+            for (let i = 1; i < 5; i++) {
+                const r = rCore + (rFilm - rCore) * (i / 5);
+                guides += `<circle cx="${cx}" cy="${cy}" r="${r.toFixed(1)}" fill="none" stroke="#faf6ec" stroke-width="0.5" opacity="0.6"/>`;
+            }
+            return `<svg viewBox="0 0 150 116" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="${cx}" cy="${cy}" r="${rOuter.toFixed(1)}" fill="#a8998a"/>
+                <circle cx="${cx}" cy="${cy}" r="${rFilm.toFixed(1)}" fill="#b8752f"/>
+                ${guides}
+                <circle cx="${cx}" cy="${cy}" r="${rCore.toFixed(1)}" fill="#ffffff" stroke="#1a1410" stroke-width="1.2"/>
+            </svg>`;
+        }
+
+        function printTicket(type) {
+            if (TAB_FIELD_MAP[type]) snapshotHistory(type); // printing a ticket is a strong "final result" signal
+            let html = '<div style="max-width: 800px; margin: 0 auto; font-family: \'Inter\', sans-serif;">';
+
+            const ticketId = 'CH-' + new Date().toISOString().slice(0,10).replace(/-/g,'') + '-' + Math.random().toString(36).slice(2,6).toUpperCase();
+            html += `<div class="pt-letterhead">
+                <div class="pt-brand">
+                    <img src="https://i.postimg.cc/7ZqG3fCq/Cap-Formula.png" alt="Logo">
+                    <div><div class="pt-brand-name">CapHub</div><div class="pt-brand-tag">Precision Winding &amp; Potting</div></div>
+                </div>
+                <div class="pt-idbox">
+                    Ticket ID: <b>${ticketId}</b><br>
+                    ${new Date().toLocaleString()}
+                </div>
+            </div>`;
+
+            const titles = {
+                m1: ['Cap Formula', 'Single-Stage Winding &amp; Potting'],
+                m2: ['kVAr Integrator', 'kVAr ⇄ µF Conversion &amp; Winding'],
+                m3: ['DCW Module', 'Double Concentric Winding'],
+                m4: ['TCW Module — MFD', 'Triple Concentric Winding (Custom MFD)'],
+                m5: ['TCW Module — kVAr', 'Triple Concentric Winding (kVAr-Driven)'],
+                f:  ['Flat Elements', 'Oval / Flat Winding &amp; PBT Box']
+            };
+            const [tTitle, tSub] = titles[type] || ['CapHub', ''];
+            html += `<div class="pt-title-row">
+                <div><div class="pt-ttl">${tTitle}</div><div class="pt-sub">${tSub}</div></div>
+                <div class="pt-sub">PRODUCTION TICKET</div>
+            </div>`;
+
+            if (type === 'm1') {
+                html += ptGrid2(
+                    ptSec('Winding Parameters — Input', 'pt-input-hdr',
+                        ptRow('Target MFD (µF)', val('m1_mfd')) +
+                        ptRow('Pos Tol %', val('m1_posTol')) +
+                        ptRow('Fin. MFD (µF)', val('m1_finMfd')) +
+                        ptRow('Film Thickness (µm)', val('m1_thick')) +
+                        ptRow('Width (mm)', val('m1_width')) +
+                        ptRow('Free Margin (mm)', val('m1_margin')) +
+                        ptRow('Offset (mm)', val('m1_offset')) +
+                        ptRow('Core OD (mm)', val('m1_coreOd')) +
+                        ptRow('Cover Film Turns', val('m1_covTurns'))
+                    ),
+                    ptSec('Winding — Final Data', 'pt-output-hdr',
+                        ptRow('Length (m)', txt('m1_res_length')) +
+                        ptRow('Weight of Element (g)', txt('m1_res_wtEle')) +
+                        ptRow('Dia Incl Cover Film (mm)', txt('m1_res_dia'), true) +
+                        ptRow('No of Turns', txt('m1_res_turns')) +
+                        ptRow('Cover Film Weight (g)', txt('m1_res_covWt')) +
+                        ptRow('SA / MFD', txt('m1_res_sa')) +
+                        ptRow('Weight of Core (g)', txt('m1_res_coreWt')) +
+                        ptRow('Total Element Wt. (g)', txt('m1_res_totalWt'), true) +
+                        ptRow('Fits Can Ø' + val('m1_canId') + 'mm (+' + val('m1_clearance') + 'mm)?', txt('m1_res_canFit'), true)
+                    )
+                );
+
+                const m1res = getWindingResults(num('m1_finMfd'), num('m1_mfd'), num('m1_thick'), num('m1_width'), num('m1_margin'), num('m1_offset'), num('m1_coreOd'), num('m1_covTurns'));
+                if (m1res) {
+                    html += `<div class="pt-diagram-panel">
+                        ${buildPrintDiagram(m1res, num('m1_coreOd'))}
+                        <div class="pt-diagram-stats">
+                            <div><span>Ø${m1res.diaInclCover.toFixed(2)}</span><label>Finished Dia (mm)</label></div>
+                            <div><span>${Math.round(m1res.noOfTurns)}</span><label>Turns</label></div>
+                            <div><span>${m1res.length_m.toFixed(2)}</span><label>Length (m)</label></div>
+                            <div><span>${m1res.weightElement.toFixed(2)}</span><label>Element Wt (g)</label></div>
+                        </div>
+                    </div>`;
+                }
+
+                html += ptGrid2(
+                    ptSec('Potting — Input', 'pt-input-hdr',
+                        ptRow('Element Vol (cm³)', val('m1_eleVol')) +
+                        ptRow('Can Inner Dia (mm)', val('m1_canId')) +
+                        ptRow('Height Above Element (mm)', val('m1_htAbove')) +
+                        ptRow('Resin Density (g/cm³)', val('m1_density')) +
+                        ptRow('Hardener Ratio (%)', val('m1_ratio'))
+                    ),
+                    ptSec('Potting Recipe — Final Data', 'pt-final-hdr',
+                        ptRow('Can Vol (cm³)', txt('m1_res_canVol')) +
+                        ptRow('Void Space (cm³)', txt('m1_res_void')) +
+                        ptRow('Resin [Part A] (g)', txt('m1_res_resin')) +
+                        ptRow('Hardener [Part B] (g)', txt('m1_res_hardener')) +
+                        ptRow('Total Mix (g)', txt('m1_res_totalMix'), true)
+                    )
+                );
+            }
+            else if (type === 'm2') {
+                html += ptGrid2(
+                    ptSec('Input — kVAr to µF', 'pt-input-hdr',
+                        ptRow('kVAr', val('m2_kvar')) +
+                        ptRow('Voltage (V)', val('m2_vin')) +
+                        ptRow('Frequency (Hz)', val('m2_freq1')) +
+                        ptRow('Phase', val('m2_phase'))
+                    ),
+                    ptSec('Output — kVAr to µF', 'pt-output-hdr',
+                        ptRow('MFD Each Element (µF)', txt('m2_res_mfdEach')) +
+                        ptRow('Φ Capacitance (µF)', txt('m2_res_mfdTotal')) +
+                        ptRow('Reactive Current (A)', txt('m2_res_amps'))
+                    )
+                );
+                html += ptGrid2(
+                    ptSec('Input — µF to kVAr', 'pt-input-hdr',
+                        ptRow('Enter Frequency (Hz)', val('m2_freq2')) +
+                        ptRow('Enter Total µF', val('m2_mfdIn')) +
+                        ptRow('Enter Volts', val('m2_vout'))
+                    ),
+                    ptSec('Output — µF to kVAr', 'pt-output-hdr',
+                        ptRow('Total Power (kVAr)', txt('m2_res_kvarOut'), true)
+                    )
+                );
+                html += ptGrid2(
+                    ptSec('Winding Parameters — Input', 'pt-input-hdr',
+                        ptRow('Film Type', val('m2_filmType')) +
+                        ptRow('MFD (Drawing)', val('m2_w_mfd')) +
+                        ptRow('Pos Tol %', val('m2_w_posTol')) +
+                        ptRow('Fin. MFD (µF)', val('m2_w_finMfd')) +
+                        ptRow('Thickness (µm)', val('m2_w_thick')) +
+                        ptRow('Width (mm)', val('m2_w_width')) +
+                        ptRow('Core OD (mm)', val('m2_w_coreOd')) +
+                        ptRow('Wt of Core (g)', val('m2_w_coreWt')) +
+                        ptRow('Cover Turns', val('m2_w_covTurns'))
+                    ),
+                    ptSec('Winding — Final Data', 'pt-final-hdr',
+                        ptRow('Length (m)', txt('m2_res_len')) +
+                        ptRow('Dia Incl Cover Film (mm)', txt('m2_res_dia'), true) +
+                        ptRow('No of Turns', txt('m2_res_turns')) +
+                        ptRow('SA / MFD', txt('m2_res_sa')) +
+                        ptRow('Element Wt (g)', txt('m2_res_wtEle')) +
+                        ptRow('Cover Film Wt (g)', txt('m2_res_covWt')) +
+                        ptRow('Total Element Wt. (g)', txt('m2_res_totalWt'), true) +
+                        ptRow('Fits Can Ø' + val('m2_w_canDia') + 'mm (+' + val('m2_w_clearance') + 'mm)?', txt('m2_res_canFit'), true)
+                    )
+                );
+            }
+            else if (type === 'm3') {
+                html += ptGrid2(
+                    ptSec('Winding Parameters — Input', 'pt-input-hdr',
+                        ptRow('Target MFD 1 (Inner, µF)', val('m3_mfd1')) +
+                        ptRow('Target MFD 2 (Outer, µF)', val('m3_mfd2')) +
+                        ptRow('Pos Tol %', val('m3_posTol')) +
+                        ptRow('Fin. MFD 1 (µF)', val('m3_finMfd1')) +
+                        ptRow('Fin. MFD 2 (µF)', val('m3_finMfd2')) +
+                        ptRow('Thickness (µm)', val('m3_thick')) +
+                        ptRow('Width (mm)', val('m3_width')) +
+                        ptRow('Free Margin (mm)', val('m3_margin')) +
+                        ptRow('Offset (mm)', val('m3_offset')) +
+                        ptRow('Core OD (mm)', val('m3_coreOd')) +
+                        ptRow('Wt of Core (g)', val('m3_coreWt')) +
+                        ptRow('Cover Turns (Out)', val('m3_covTurns'))
+                    ),
+                    ptSec('Stage Dimensions (In / Out) — Final Data', 'pt-output-hdr',
+                        ptRow('Lengths L1 / L2 (m)', txt('m3_res_lens')) +
+                        ptRow('Ele Dia D1 / D2 (mm)', txt('m3_res_dias'), true) +
+                        ptRow('Turns N1 / N2', txt('m3_res_turns')) +
+                        ptRow('Weights W1 / W2 (g)', txt('m3_res_wts'))
+                    )
+                );
+                html += ptSec('Final Assembly — Final Data', 'pt-final-hdr',
+                    ptRow('Outer Cover Wt (g, est.)', txt('m3_res_covWt')) +
+                    ptRow('Total Turns', txt('m3_res_totTurns')) +
+                    ptRow('Final Dia Incl. Cover (mm)', txt('m3_res_totDia'), true) +
+                    ptRow('Total Element Wt. (g)', txt('m3_res_totWt'), true)
+                );
+            }
+            else if (type === 'm4') {
+                html += ptGrid2(
+                    ptSec('Winding Parameters — Input', 'pt-input-hdr',
+                        ptRow('MFD 1 — Inner (µF)', val('m4_mfd1')) +
+                        ptRow('MFD 2 — Middle (µF)', val('m4_mfd2')) +
+                        ptRow('MFD 3 — Outer (µF)', val('m4_mfd3')) +
+                        ptRow('Pos Tol %', val('m4_posTol')) +
+                        ptRow('Thickness (µm)', val('m4_thick')) +
+                        ptRow('Width (mm)', val('m4_width')) +
+                        ptRow('Free Margin (mm)', val('m4_margin')) +
+                        ptRow('Offset (mm)', val('m4_offset')) +
+                        ptRow('Core OD (mm)', val('m4_coreOd')) +
+                        ptRow('Cover Turns (Out)', val('m4_covTurns')) +
+                        ptRow('Wt of Core (g)', val('m4_coreWt'))
+                    ),
+                    ptSec('Stage Dimensions (In / Mid / Out) — Final Data', 'pt-output-hdr',
+                        ptRow('Lengths (m)', txt('m4_res_lens')) +
+                        ptRow('Dias (mm)', txt('m4_res_dias'), true) +
+                        ptRow('Turns', txt('m4_res_turns')) +
+                        ptRow('Weights (g)', txt('m4_res_wts'))
+                    )
+                );
+                html += ptSec('Final Assembly — Final Data', 'pt-final-hdr',
+                    ptRow('Total Turns', txt('m4_res_totTurns')) +
+                    ptRow('Final Dia Incl. Cover (mm)', txt('m4_res_totDia'), true) +
+                    ptRow('Total Element Wt. (g)', txt('m4_res_totWt'), true)
+                );
+            }
+            else if (type === 'm5') {
+                html += ptGrid2(
+                    ptSec('Input — kVAr to µF', 'pt-input-hdr',
+                        ptRow('kVAr', val('m5_kvar')) +
+                        ptRow('Voltage (V)', val('m5_vin')) +
+                        ptRow('Frequency (Hz)', val('m5_freq1'))
+                    ),
+                    ptSec('Output — kVAr to µF', 'pt-output-hdr',
+                        ptRow('MFD per Phase (µF)', txt('m5_res_mfdEach')) +
+                        ptRow('Total µF', txt('m5_res_mfdTotal'))
+                    )
+                );
+                html += ptGrid2(
+                    ptSec('Input — µF to kVAr', 'pt-input-hdr',
+                        ptRow('Enter Total µF', val('m5_mfdIn')) +
+                        ptRow('Volts', val('m5_vout')) +
+                        ptRow('Freq (Hz)', val('m5_freq2'))
+                    ),
+                    ptSec('Output — µF to kVAr', 'pt-output-hdr',
+                        ptRow('Total kVAr', txt('m5_res_kvarOut'), true)
+                    )
+                );
+                html += ptGrid2(
+                    ptSec('Winding Parameters — Input', 'pt-input-hdr',
+                        ptRow('MFD per Phase (from above, µF)', val('m5_w_mfd')) +
+                        ptRow('Pos Tol %', val('m5_w_posTol')) +
+                        ptRow('Core OD (mm)', val('m5_w_coreOd')) +
+                        ptRow('Thickness (µm)', val('m5_w_thick')) +
+                        ptRow('Width (mm)', val('m5_w_width')) +
+                        ptRow('Free Margin (mm)', val('m5_w_margin')) +
+                        ptRow('Offset (mm)', val('m5_w_offset')) +
+                        ptRow('Wt of Core (g)', val('m5_w_coreWt')) +
+                        ptRow('Cover Turns', val('m5_w_covTurns'))
+                    ),
+                    ptSec('Stage Dimensions (In / Mid / Out) — Final Data', 'pt-output-hdr',
+                        ptRow('Lengths (m)', txt('m5_res_lens')) +
+                        ptRow('Dias (mm)', txt('m5_res_dias'), true) +
+                        ptRow('Turns', txt('m5_res_turns'))
+                    )
+                );
+                html += ptSec('Final Assembly — Final Data', 'pt-final-hdr',
+                    ptRow('Total Turns', txt('m5_res_totTurns')) +
+                    ptRow('Final Dia Incl. Cover (mm)', txt('m5_res_totDia'), true) +
+                    ptRow('Total Element Wt. (g)', txt('m5_res_totWt'), true)
+                );
+            }
+            else if (type === 'f') {
+                html += ptGrid2(
+                    ptSec('Winding Parameters — Input', 'pt-input-hdr',
+                        ptRow('Target MFD (µF)', val('f_mfd')) +
+                        ptRow('Pos Tol %', val('f_posTol')) +
+                        ptRow('Fin. MFD (µF)', val('f_finMfd')) +
+                        ptRow('Thickness (µm)', val('f_thick')) +
+                        ptRow('Width (mm)', val('f_width')) +
+                        ptRow('Free Margin (mm)', val('f_margin')) +
+                        ptRow('Offset (mm)', val('f_offset')) +
+                        ptRow('Core OD (mm)', val('f_coreOd')) +
+                        ptRow('Cover Turns', val('f_covTurns')) +
+                        ptRow('Weight of Core (g)', val('f_coreWt'))
+                    ),
+                    ptSec('Element Physical Data — Final Data', 'pt-output-hdr',
+                        ptRow('Length (m)', txt('f_res_length')) +
+                        ptRow('Weight of Element (g)', txt('f_res_wtEle')) +
+                        ptRow('Dia Incl Cover Film (mm)', txt('f_res_dia')) +
+                        ptRow('No of Turns', txt('f_res_turns')) +
+                        ptRow('SA / MFD', txt('f_res_sa')) +
+                        ptRow('Total Element Wt. (g)', txt('f_res_totalWt'), true) +
+                        ptRow('Fits Can Ø' + val('f_canDia') + 'mm (+' + val('f_clearance') + 'mm)?', txt('f_res_canFit'), true)
+                    )
+                );
+                html += ptGrid2(
+                    ptSec('Flattened Dimensions — Final Data', 'pt-final-hdr',
+                        ptRow('Ele Length (mm)', txt('f_res_eLen')) +
+                        ptRow('Ele Width (mm)', txt('f_res_eWid')) +
+                        ptRow('Ele Height (mm)', txt('f_res_eHt'))
+                    ),
+                    ptSec('Minimum PBT Box Size — Final Data', 'pt-final-hdr',
+                        ptRow('Box Length (mm)', txt('f_res_bLen')) +
+                        ptRow('Box Width (mm)', txt('f_res_bWid')) +
+                        ptRow('Box Height (mm)', txt('f_res_bHt'), true)
+                    )
+                );
+            }
+
+            html += `<div class="pt-signoff">
+                <div>Prepared By<span></span></div>
+                <div>Checked By<span></span></div>
+                <div>Approved By<span></span></div>
+            </div>
+            <div class="pt-footer-note">Generated by CapHub &middot; Ticket ${ticketId} &middot; Figures derived from the verified CapHub calculation engine &middot; Cross-check against Cap_Formula.xlsx for critical builds</div>`;
+
+            html += '</div>';
+            document.getElementById('print-area').innerHTML = html;
+            window.print();
+        }
+
+        // --- PRODUCT LIBRARY ---
+        function renderLibrary() {
+            const q = (document.getElementById('lib-search').value || '').trim().toLowerCase();
+            const rows = PRODUCT_LIBRARY.filter((p, i) => {
+                if (!q) return true;
+                return p.codeId.toLowerCase().includes(q) ||
+                       String(p.thick).includes(q) || String(p.width).includes(q) || String(p.mfd).includes(q);
+            });
+            document.getElementById('lib-count').innerText = `${rows.length} of ${PRODUCT_LIBRARY.length} products`;
+
+            let html = '';
+            rows.forEach(p => {
+                const idx = PRODUCT_LIBRARY.indexOf(p);
+                html += `<tr>
+                    <td style="font-weight:700;">${p.codeId}</td>
+                    <td>${p.thick}</td>
+                    <td>${p.width}</td>
+                    <td>${p.mfd}</td>
+                    <td class="out-cell">${p.dia}</td>
+                    <td class="out-cell">${p.turns}</td>
+                    <td class="out-cell">${p.totalWt.toFixed(3)}</td>
+                    <td>${p.canId}</td>
+                    <td><button class="btn btn-outline" style="margin-bottom:0; padding:6px 14px; width:auto; font-size:12px;" onclick="loadProduct(${idx})">Load →</button></td>
+                </tr>`;
+            });
+            document.getElementById('libraryBody').innerHTML = html || `<tr><td colspan="9" style="text-align:center; color:var(--muted); padding:24px;">No matches</td></tr>`;
+        }
+
+        function loadProduct(idx) {
+            const p = PRODUCT_LIBRARY[idx];
+            if (!p) return;
+            document.getElementById('m1_mfd').value = p.mfd;
+            document.getElementById('m1_posTol').value = p.posTol;
+            document.getElementById('m1_thick').value = p.thick;
+            document.getElementById('m1_width').value = p.width;
+            document.getElementById('m1_margin').value = p.margin;
+            document.getElementById('m1_offset').value = p.offset;
+            document.getElementById('m1_coreOd').value = p.coreOd;
+            document.getElementById('m1_covTurns').value = p.covTurns;
+            document.getElementById('m1_canId').value = p.canId;
+            document.getElementById('m1_htAbove').value = p.htAbove;
+            document.getElementById('m1_density').value = p.density;
+            document.getElementById('m1_ratio').value = 20; // Excel's Cap+Resin sheet uses a fixed 20% hardener ratio
+            calculateM1();
+            navTo('formula');
+        }
+
+        // --- CAN-FIT CHECK ---
+        // Excel: Fits? = (FinishedDia + Clearance) < TargetCanDia ? "Yes" : "No"
+        // Clearance defaults match Excel (6mm Cap formula/Flat Element, 9mm KVAR) but are now a
+        // real editable input rather than a hardcoded constant - falls back to the Excel default
+        // only when the clearance field is left blank.
+        function canFitCheck(finishedDia, targetCanDiaId, clearanceId, defaultClearance, resultId) {
+            const targetEl = document.getElementById(targetCanDiaId);
+            const clearEl = document.getElementById(clearanceId);
+            const resultEl = document.getElementById(resultId);
+            if (!targetEl || !resultEl) return;
+            const targetCanDia = parseFloat(targetEl.value);
+            if (targetEl.value === '' || isNaN(targetCanDia)) {
+                resultEl.innerText = '—';
+                resultEl.className = 'can-fit-badge';
+                return;
+            }
+            const clearance = (clearEl && clearEl.value !== '' && !isNaN(parseFloat(clearEl.value))) ? parseFloat(clearEl.value) : defaultClearance;
+            const fits = (finishedDia + clearance) < targetCanDia;
+            resultEl.innerText = fits ? 'YES' : 'NO';
+            resultEl.className = 'can-fit-badge ' + (fits ? 'fit-yes' : 'fit-no');
+        }
+
+        // --- WINDING CROSS-SECTION DIAGRAM ---
+        // Renders a to-scale engineering-style cross section (core / film / cover) that redraws
+        // on every calculateM1() call. Concentric guide rings suggest the layered winding without
+        // literally drawing hundreds of turns, which would just be visual noise at this scale.
+        function updateWindingDiagram(res, coreOd) {
+            const svg = document.getElementById('windingDiagram');
+            if (!svg) return;
+            const outerDia = res ? res.diaInclCover : 0, filmDia = res ? res.dia_mm : 0;
+            const cx = 160, cy = 118, maxPx = 92;
+
+            if (!outerDia || outerDia <= 0 || isNaN(outerDia)) {
+                svg.innerHTML = `<text x="160" y="120" text-anchor="middle" fill="var(--dim)" font-family="var(--font-main)" font-size="12">Enter winding parameters to preview</text>`;
+                document.getElementById('wd-turns').innerText = '—';
+                document.getElementById('wd-length').innerText = '—';
+                document.getElementById('wd-weight').innerText = '—';
+                return;
+            }
+
+            const scale = maxPx / (outerDia / 2);
+            const rCore = Math.max((coreOd / 2) * scale, 4);
+            const rFilm = Math.max((filmDia / 2) * scale, rCore + 2);
+            const rOuter = Math.max((outerDia / 2) * scale, rFilm + 1);
+
+            let guides = '';
+            const guideCount = 5;
+            for (let i = 1; i < guideCount; i++) {
+                const r = rCore + (rFilm - rCore) * (i / guideCount);
+                guides += `<circle cx="${cx}" cy="${cy}" r="${r.toFixed(1)}" fill="none" style="stroke:var(--bg)" stroke-width="0.6" opacity="0.4"/>`;
+            }
+
+            const dimY = cy + rOuter + 26;
+            const x1 = (cx - rOuter).toFixed(1), x2 = (cx + rOuter).toFixed(1);
+
+            svg.innerHTML = `
+                <circle cx="${cx}" cy="${cy}" r="${rOuter.toFixed(1)}" style="fill:var(--dim)" opacity="0.4"/>
+                <circle cx="${cx}" cy="${cy}" r="${rFilm.toFixed(1)}" style="fill:var(--accent)" opacity="0.88"/>
+                ${guides}
+                <circle cx="${cx}" cy="${cy}" r="${rCore.toFixed(1)}" style="fill:var(--bg);stroke:var(--text)" stroke-width="1.5"/>
+                <text x="${cx}" y="${cy + 3}" text-anchor="middle" style="fill:var(--text);font-family:var(--font-mono)" font-size="8.5" font-weight="600">Ø${coreOd}</text>
+                <line x1="${x1}" y1="${dimY}" x2="${x2}" y2="${dimY}" style="stroke:var(--muted)" stroke-width="1"/>
+                <line x1="${x1}" y1="${dimY - 6}" x2="${x1}" y2="${dimY + 6}" style="stroke:var(--muted)" stroke-width="1"/>
+                <line x1="${x2}" y1="${dimY - 6}" x2="${x2}" y2="${dimY + 6}" style="stroke:var(--muted)" stroke-width="1"/>
+                <text x="${cx}" y="${dimY + 20}" text-anchor="middle" style="fill:var(--text);font-family:var(--font-mono)" font-size="13" font-weight="700">Ø${outerDia.toFixed(2)} mm</text>
+            `;
+
+            document.getElementById('wd-turns').innerText = Math.round(res.noOfTurns).toLocaleString();
+            document.getElementById('wd-length').innerText = res.length_m.toFixed(2);
+            document.getElementById('wd-weight').innerText = res.weightElement.toFixed(2);
+        }
+
+
+        const HISTORY_KEY = 'caphub_history_v1';
+        const HISTORY_MAX = 50;
+        const TAB_LABELS = { m1: 'Cap Formula', m2: 'kVAr Winding', m3: 'DCW', m4: 'TCW MFD', m5: 'TCW KVAr', f: 'Flat Elements' };
+        const TAB_NAV = { m1: 'formula', m2: 'kvar', m3: 'dcw', m4: 'tcw', m5: 'tcw', f: 'flat' };
+        const TAB_FIELD_MAP = {
+            m1: ['m1_mfd','m1_posTol','m1_thick','m1_width','m1_margin','m1_offset','m1_coreOd','m1_covTurns','m1_canId','m1_clearance','m1_htAbove','m1_density','m1_ratio'],
+            m2: ['m2_filmType','m2_w_mfd','m2_w_posTol','m2_w_thick','m2_w_width','m2_w_coreOd','m2_w_coreWt','m2_w_covTurns','m2_w_canDia','m2_w_clearance'],
+            m3: ['m3_mfd1','m3_mfd2','m3_posTol','m3_thick','m3_width','m3_margin','m3_offset','m3_coreOd','m3_coreWt','m3_covTurns'],
+            m4: ['m4_mfd1','m4_mfd2','m4_mfd3','m4_posTol','m4_thick','m4_width','m4_margin','m4_offset','m4_coreOd','m4_covTurns','m4_coreWt'],
+            m5: ['m5_w_mfd','m5_w_posTol','m5_w_coreOd','m5_w_thick','m5_w_width','m5_w_margin','m5_w_offset','m5_w_coreWt','m5_w_covTurns'],
+            f:  ['f_mfd','f_posTol','f_thick','f_width','f_margin','f_offset','f_coreOd','f_covTurns','f_coreWt','f_canDia','f_clearance']
+        };
+
+        function loadHistory() {
+            try { return JSON.parse(localStorage.getItem(HISTORY_KEY)) || []; } catch (e) { return []; }
+        }
+        function persistHistory(hist) {
+            try { localStorage.setItem(HISTORY_KEY, JSON.stringify(hist)); } catch (e) { /* storage unavailable/full - fail silently */ }
+        }
+
+        function buildSummary(tab) {
+            switch (tab) {
+                case 'm1': return `${val('m1_mfd')}µF · ${val('m1_thick')}µm×${val('m1_width')}mm → Ø${txt('m1_res_dia')}mm, ${txt('m1_res_totalWt')}g`;
+                case 'm2': return `${val('m2_w_mfd')}µF (${val('m2_filmType')}) → Ø${txt('m2_res_dia')}mm, ${txt('m2_res_totalWt')}g`;
+                case 'm3': return `${val('m3_mfd1')}/${val('m3_mfd2')}µF → Ø${txt('m3_res_totDia')}mm, ${txt('m3_res_totWt')}g`;
+                case 'm4': return `${val('m4_mfd1')}/${val('m4_mfd2')}/${val('m4_mfd3')}µF → Ø${txt('m4_res_totDia')}mm, ${txt('m4_res_totWt')}g`;
+                case 'm5': return `${val('m5_w_mfd')}µF ×3 → Ø${txt('m5_res_totDia')}mm, ${txt('m5_res_totWt')}g`;
+                case 'f':  return `${val('f_mfd')}µF · ${val('f_thick')}µm×${val('f_width')}mm → Box ${txt('f_res_bLen')}×${txt('f_res_bWid')}×${txt('f_res_bHt')}mm`;
+                default:   return '';
+            }
+        }
+
+        function snapshotHistory(tab) {
+            const fields = TAB_FIELD_MAP[tab];
+            if (!fields) return;
+            const inputs = {};
+            fields.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) inputs[id] = el.value;
+            });
+            const summary = buildSummary(tab);
+            const hist = loadHistory();
+            // Skip if identical to the most recent entry for this tab (avoid clutter from repeat clicks)
+            const last = hist.find(h => h.tab === tab);
+            if (last && last.summary === summary) return;
+            hist.unshift({ ts: Date.now(), tab, summary, inputs });
+            if (hist.length > HISTORY_MAX) hist.length = HISTORY_MAX;
+            persistHistory(hist);
+        }
+
+        function restoreHistoryEntry(idx) {
+            const hist = loadHistory();
+            const entry = hist[idx];
+            if (!entry) return;
+            Object.keys(entry.inputs).forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.value = entry.inputs[id];
+            });
+            const calcFns = { m1: calculateM1, m2: calculateM2Winding, m3: calculateM3, m4: calculateTCW_MFD, m5: calculateTCW_KVAR, f: calculateFlat };
+            if (calcFns[entry.tab]) calcFns[entry.tab]();
+            if (entry.tab === 'm4') switchTcwMode('mfd');
+            if (entry.tab === 'm5') switchTcwMode('kvar');
+            navTo(TAB_NAV[entry.tab]);
+            closeHistory();
+        }
+
+        function deleteHistoryEntry(idx) {
+            const hist = loadHistory();
+            hist.splice(idx, 1);
+            persistHistory(hist);
+            renderHistoryList();
+        }
+
+        function clearAllHistory() {
+            if (!confirm('Clear all calculation history? This cannot be undone.')) return;
+            persistHistory([]);
+            renderHistoryList();
+        }
+
+        function relativeTime(ts) {
+            const diffSec = Math.round((Date.now() - ts) / 1000);
+            if (diffSec < 60) return 'just now';
+            const diffMin = Math.round(diffSec / 60);
+            if (diffMin < 60) return `${diffMin}m ago`;
+            const diffHr = Math.round(diffMin / 60);
+            if (diffHr < 24) return `${diffHr}h ago`;
+            const diffDay = Math.round(diffHr / 24);
+            if (diffDay < 7) return `${diffDay}d ago`;
+            return new Date(ts).toLocaleDateString();
+        }
+
+        function renderHistoryList() {
+            const hist = loadHistory();
+            document.getElementById('hist-count').innerText = `${hist.length} saved calculation${hist.length === 1 ? '' : 's'}`;
+            if (hist.length === 0) {
+                document.getElementById('hist-body').innerHTML = `<div style="text-align:center; color:var(--muted); padding:32px 16px;">No history yet — click "Force Calc" on any tab to start saving.</div>`;
+                return;
+            }
+            let html = '';
+            hist.forEach((h, i) => {
+                html += `<div class="diag-row">
+                    <div style="flex:1; min-width:0;">
+                        <div class="diag-name">${TAB_LABELS[h.tab] || h.tab} <span style="color:var(--muted); font-weight:500;">· ${relativeTime(h.ts)}</span></div>
+                        <div class="diag-vals" style="text-align:left; margin-top:2px;">${h.summary}</div>
+                    </div>
+                    <button class="btn btn-outline" style="margin-bottom:0; width:auto; padding:8px 14px; font-size:12px;" onclick="restoreHistoryEntry(${i})">Restore</button>
+                    <button class="icon-btn" style="width:32px; height:32px; flex-shrink:0;" onclick="deleteHistoryEntry(${i})" title="Delete">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                    </button>
+                </div>`;
+            });
+            document.getElementById('hist-body').innerHTML = html;
+        }
+
+        function openHistory() {
+            renderHistoryList();
+            document.getElementById('hist-overlay').classList.add('on');
+        }
+        function closeHistory() {
+            document.getElementById('hist-overlay').classList.remove('on');
+        }
+
+        // --- CSV EXPORT ---
+        function downloadCSV(filename, rows) {
+            const csv = rows.map(r => r.map(field => {
+                const s = String(field === undefined || field === null ? '' : field);
+                return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+            }).join(',')).join('\r\n');
+            const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url; a.download = filename;
+            document.body.appendChild(a); a.click(); document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function exportHistoryCSV() {
+            const hist = loadHistory();
+            const rows = [['Date/Time', 'Tab', 'Summary']];
+            hist.forEach(h => rows.push([new Date(h.ts).toLocaleString(), TAB_LABELS[h.tab] || h.tab, h.summary]));
+            downloadCSV(`caphub_history_${Date.now()}.csv`, rows);
+        }
+
+        function exportMatrixCSV() {
+            const headers = ['Target MFD','Tol %','Thick (µm)','Width (mm)','Margin (mm)','Offset (mm)','Core OD','Core Wt (g)','Cov Turns',
+                              'Fin MFD','Length (m)','Dia (mm)','Turns','Ele Wt (g)','Cov Wt (g)','SA/MFD','Total Wt (g)'];
+            const classes = ['mat-mfd','mat-tol','mat-thick','mat-width','mat-margin','mat-offset','mat-coreOd','mat-coreWt','mat-covTurns',
+                              'mat-finMfd','mat-len','mat-dia','mat-turns','mat-eleWt','mat-covWt','mat-sa','mat-totWt'];
+            const rows = [headers];
+            document.querySelectorAll('#matrixBody tr').forEach(tr => {
+                rows.push(classes.map(cls => {
+                    const el = tr.querySelector('.' + cls);
+                    return el ? el.value : '';
+                }));
+            });
+            downloadCSV(`caphub_matrix_${Date.now()}.csv`, rows);
+        }
+
+        // --- CROSS-TAB CARRY-OVER ---
+        // Pushes the shared physical winding parameters from Cap Formula into another tab's
+        // Stage 1 fields, so common values don't need retyping.
+        function sendToTab(dest) {
+            const src = { thick: val('m1_thick'), width: val('m1_width'), margin: val('m1_margin'), offset: val('m1_offset'), coreOd: val('m1_coreOd'), covTurns: val('m1_covTurns') };
+            const setIf = (id, v) => { const el = document.getElementById(id); if (el && v !== undefined) el.value = v; };
+
+            if (dest === 'dcw') {
+                setIf('m3_thick', src.thick); setIf('m3_width', src.width); setIf('m3_margin', src.margin);
+                setIf('m3_offset', src.offset); setIf('m3_coreOd', src.coreOd); setIf('m3_covTurns', src.covTurns);
+                calculateM3(); navTo('dcw');
+            } else if (dest === 'tcw_mfd') {
+                setIf('m4_thick', src.thick); setIf('m4_width', src.width); setIf('m4_margin', src.margin);
+                setIf('m4_offset', src.offset); setIf('m4_coreOd', src.coreOd); setIf('m4_covTurns', src.covTurns);
+                calculateTCW_MFD(); switchTcwMode('mfd'); navTo('tcw');
+            } else if (dest === 'tcw_kvar') {
+                setIf('m5_w_thick', src.thick); setIf('m5_w_width', src.width); setIf('m5_w_margin', src.margin);
+                setIf('m5_w_offset', src.offset); setIf('m5_w_coreOd', src.coreOd); setIf('m5_w_covTurns', src.covTurns);
+                calculateTCW_KVAR(); switchTcwMode('kvar'); navTo('tcw');
+            } else if (dest === 'flat') {
+                setIf('f_thick', src.thick); setIf('f_width', src.width); setIf('f_margin', src.margin);
+                setIf('f_offset', src.offset); setIf('f_coreOd', src.coreOd); setIf('f_covTurns', src.covTurns);
+                calculateFlat(); navTo('flat');
+            }
+        }
+
+        // --- ENGINE SELF-TEST SUITE ---
+        // Ground-truth values below were hand-verified against Cap_Formula.xlsx cached cell values
+        // during the July 2026 formula audit. If any of these drift, a later edit broke something
+        // that was previously confirmed correct against Excel - re-verify against the workbook
+        // before "fixing" a failing test here.
+        function runSelfTests() {
+            const results = [];
+            function check(name, actual, expected) {
+                Object.keys(expected).forEach(key => {
+                    const exp = expected[key];
+                    const act = actual ? actual[key] : undefined;
+                    let pass, diffPct;
+                    if (act === undefined || act === null || isNaN(act)) {
+                        pass = false; diffPct = null;
+                    } else {
+                        const diff = Math.abs(act - exp);
+                        diffPct = exp !== 0 ? (diff / Math.abs(exp)) * 100 : diff * 100;
+                        pass = diffPct < 0.01; // 0.01% tolerance
+                    }
+                    results.push({ name: `${name} — ${key}`, expected: exp, actual: act, diffPct, pass });
+                });
+            }
+
+            check('TC1 Winding — Cap+Resin sheet row 3 (5.9µm/30mm/2µF)',
+                getWindingResults(2, 2, 5.9, 30, 1.2, 1, 9, 10),
+                { length_m: 22.763188760077533, weightElement: 3.666466813585688, diaInclCover: 16.277228563549166, noOfTurns: 291.4079899808968, coverFilmWeight: 0.3328516331178751 });
+
+            check('TC2 Winding — Cap Formula sheet (6µm/30mm/5µF)',
+                getWindingResults(5, 5, 6, 30, 1.5, 1, 9, 10),
+                { length_m: 59.20803334596439, weightElement: 9.698275862068966, diaInclCover: 23.498603373441203, noOfTurns: 587.4418072267168, coverFilmWeight: 0.48235789841278276 });
+
+            check('TC3 Winding — KVAR sheet, Film Type=SERIES (6µm/37.5mm)',
+                getWindingResults(24.64, 24.64, 6, 37.5, 0, 0, 9, 10, 24),
+                { length_m: 316.09195402298855, weightElement: 64.7198275862069, diaInclCover: 50.36988550617811, noOfTurns: 1707.0785627574212, coverFilmWeight: 1.298352531506038 });
+
+            check('TC4 SA/MFD divides by Fin.MFD, not raw MFD (Pos Tol=10%)',
+                getWindingResults(5.5, 5, 6, 30, 1.5, 1, 9, 10),
+                { saMfd: 165.2210982121327 });
+
+            check('TC5 kVAr→µF conversion (1kVAr / 415V / 3φ / 50Hz)',
+                calcKvarToMfd(1, 415, 50, 3),
+                { mfdEach: 6.16, mfdTotal: 9.24, currentAmp: 1.3912462784162052 });
+
+            check('TC6 µF→kVAr conversion (9.24µF / 440V / 3φ / 50Hz)',
+                { kvarOut: calcMfdToKvar(9.24, 50, 440, 3) },
+                { kvarOut: 1.1234113103275034 });
+
+            check('TC7 Resin split order (void=13.16cm³, density=1.41, ratio=20%)',
+                calcResin(13.16, 1.41, 20),
+                { resinPartA: 18.5556, hardener: 3.71112, totalMix: 22.26672 });
+
+            check('TC8 Core weight formula (2/75 × Width, width=75mm)',
+                { coreWt: calcCoreWeightFromWidth(75) },
+                { coreWt: 2 });
+
+            const tcwKvar = getTcwResults(2.5, 5, 7.5, 5.9, 37.5, 2.5, 1, 9, 10, 'kvar');
+            check('TC9 TCW cover scheme — kVAr sheet (0.8/0.8/1.5mm)',
+                { d1: tcwKvar ? tcwKvar.dias[0] : null, d2: tcwKvar ? tcwKvar.dias[1] : null, d3: tcwKvar ? tcwKvar.finalPhysicalDia : null },
+                { d1: 16.973780823577894, d2: 26.28120106480722, d3: 36.60662455714351 });
+
+            const tcwMfd = getTcwResults(2.5, 5, 7.5, 5.9, 37.5, 2.5, 1, 9, 10, 'mfd');
+            check('TC10 TCW cover scheme — MFD sheet (0.5/0.5/0.5mm)',
+                { d1: tcwMfd ? tcwMfd.dias[0] : null, d2: tcwMfd ? tcwMfd.dias[1] : null, d3: tcwMfd ? tcwMfd.finalPhysicalDia : null },
+                { d1: 16.673780823577893, d2: 25.782352327483018, d3: 35.23475564799437 });
+
+            return results;
+        }
+
+        function fmtNum(n) {
+            if (n === null || n === undefined || isNaN(n)) return '—';
+            let s = (Math.abs(n) < 1000 ? n.toFixed(4) : n.toFixed(2));
+            if (s.indexOf('.') !== -1) {
+                s = s.replace(/0+$/, '').replace(/\.$/, '');
+            }
+            return s;
+        }
+
+        function openDiagnostics() {
+            const results = runSelfTests();
+            const passCount = results.filter(r => r.pass).length;
+            const allPass = passCount === results.length;
+
+            document.getElementById('diag-summary').innerText =
+                `${passCount} / ${results.length} checks passed` + (allPass ? ' — engine matches Excel ground truth' : ' — investigate before trusting results');
+            document.getElementById('diag-summary').style.color = allPass ? 'var(--success)' : 'var(--danger)';
+
+            let html = '';
+            results.forEach(r => {
+                html += `<div class="diag-row">
+                    <div class="diag-name">${r.name}</div>
+                    <div class="diag-vals">exp ${fmtNum(r.expected)} · got ${fmtNum(r.actual)}${r.diffPct !== null ? ' · Δ' + r.diffPct.toFixed(4) + '%' : ''}</div>
+                    <div class="diag-badge ${r.pass ? 'pass' : 'fail'}">${r.pass ? 'PASS' : 'FAIL'}</div>
+                </div>`;
+            });
+            document.getElementById('diag-body').innerHTML = html;
+            document.getElementById('diag-overlay').classList.add('on');
+        }
+
+        function closeDiagnostics() {
+            document.getElementById('diag-overlay').classList.remove('on');
+        }
+
+        // --- REQUIRED-FIELD VALIDATION ---
+        // Runs only when a "Force Calc" button is explicitly clicked (not on every keystroke,
+        // so a fresh blank tab doesn't light up red immediately). Advisory only - calculation
+        // still proceeds using 0 for any blank field, matching prior behavior.
+        function validateRequired(ids) {
+            let allValid = true;
+            ids.forEach(id => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                const isBlank = el.value === '' || el.value === null;
+                el.classList.toggle('invalid', isBlank);
+                if (isBlank) allValid = false;
+            });
+            return allValid;
+        }
+        // Clear the invalid highlight as soon as the person fills the field back in.
+        document.addEventListener('input', (e) => {
+            if (e.target.classList && e.target.classList.contains('invalid') && e.target.value !== '') {
+                e.target.classList.remove('invalid');
+            }
+        });
+        // Delegate on every button carrying data-req="id1 id2 ..." so Force Calc buttons flag
+        // any blank required field before their own onclick handler runs the calculation.
+        document.addEventListener('click', (e) => {
+            const btn = e.target.closest('.btn-force[data-req]');
+            if (!btn) return;
+            validateRequired(btn.getAttribute('data-req').split(' ').filter(Boolean));
+        }, true); // capture phase so this runs before the button's own onclick
+
+        // Bubble phase (default) - runs AFTER the button's own onclick has already recalculated,
+        // so the snapshot captures fresh output values, not stale ones from before the click.
+        document.addEventListener('click', (e) => {
+            const btn = e.target.closest('.btn-force[data-tab]');
+            if (!btn) return;
+            snapshotHistory(btn.getAttribute('data-tab'));
+        });
+
+        // --- VALUE-CHANGE ANIMATION ---
+        // Watches every result display for text changes and flashes it briefly. Deliberately
+        // observer-based rather than editing each calculate function's innerText assignment -
+        // safer, and automatically covers dynamically-created elements (Matrix rows, tickets).
+        const PULSE_SELECTOR = '.result-val, .can-fit-badge, .out-val';
+        const valueObserver = new MutationObserver((mutations) => {
+            const seen = new Set();
+            mutations.forEach(m => {
+                const el = m.target.nodeType === 3 ? m.target.parentElement : m.target;
+                if (!el || seen.has(el)) return;
+                if (el.matches && el.matches(PULSE_SELECTOR)) {
+                    seen.add(el);
+                    el.classList.remove('value-pulse');
+                    void el.offsetWidth; // restart animation
+                    el.classList.add('value-pulse');
+                }
+            });
+        });
+        valueObserver.observe(document.body, { childList: true, characterData: true, subtree: true });
+
+        // PWA SERVICE WORKER REGISTRATION
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js').catch(err => console.log('SW registration failed:', err));
+            });
+        }
+
+        // --- INIT ALL ---
+        window.onload = function() { 
+            initTheme();
+            updatePhaseLabels(); 
+            calculateM1(); 
+            calculateM2_Left(); 
+            calculateM2Winding(); 
+            calculateM3();
+            calculateTCW_MFD();
+            calculateTCW_KVAR();
+            calculateFlat();
+            initMatrix();
+            renderLibrary();
+        };
+    </script>
+</body>
+</html>
