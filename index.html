@@ -15,7 +15,7 @@
         /* THEME VARIABLES */
         :root {
             --ease: cubic-bezier(.4,0,.2,1); --spring: cubic-bezier(.34,1.56,.64,1);
-            --sidebar-w: 240px; --hdr-h: 64px;
+            --sidebar-w: 240px; --hdr-h: 64px; --nav-height: 88px;
             --font-main: 'Inter', -apple-system, sans-serif;
             --font-head: 'Space Grotesk', 'Inter', sans-serif;
             --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', monospace;
@@ -75,12 +75,12 @@
         .sb-item.on { color: var(--accent); background: var(--accent-bg); border: 1px solid var(--accent-bg); }
 
         /* MAIN SCROLL AREA */
-        .main-scroll { flex: 1; overflow-y: auto; scroll-behavior: smooth; padding-bottom: calc(var(--nav-height) + 40px); }
+        .main-scroll { flex: 1; overflow-y: auto; scroll-behavior: smooth; padding-bottom: calc(var(--nav-height) + 40px + env(safe-area-inset-bottom)); }
         .container { max-width: 1200px; margin: 0 auto; padding: 24px 16px; display: grid; grid-template-columns: 1fr; gap: 20px; }
         @media (min-width: 1024px) { .container { grid-template-columns: 1fr 1fr; padding: 32px 40px; gap: 24px;} .full-width { grid-column: span 2; } #sidebar { display: flex; } .main-scroll { padding-bottom: 40px; } }
 
         /* BOTTOM NAV (Mobile) */
-        #bnav { display: flex; position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); width: 94%; max-width: 450px; background: var(--surface); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); border: 1px solid var(--border); border-radius: 24px; padding: 8px 6px; justify-content: space-around; z-index: 1000; box-shadow: var(--shadow); overflow-x: auto; -ms-overflow-style: none; scrollbar-width: none; }
+        #bnav { display: flex; position: fixed; bottom: calc(16px + env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%); width: 94%; max-width: 450px; background: var(--surface); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); border: 1px solid var(--border); border-radius: 24px; padding: 8px 6px; justify-content: space-around; z-index: 1000; box-shadow: var(--shadow); overflow-x: auto; -ms-overflow-style: none; scrollbar-width: none; }
         #bnav::-webkit-scrollbar { display: none; }
         .ni { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 8px 12px; border-radius: 16px; cursor: pointer; color: var(--muted); transition: all 0.2s var(--ease); min-width: 70px; }
         .ni svg { width: 22px; height: 22px; }
@@ -227,6 +227,15 @@
         .diag-badge.pass { background: rgba(94,184,138,0.15); color: var(--success); }
         .diag-badge.fail { background: rgba(217,85,62,0.15); color: var(--danger); }
         .diag-footer { padding: 16px 24px; border-top: 1px solid var(--border); text-align: right; }
+
+        /* UPDATE TOAST */
+        #update-toast { display: none; position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom)); transform: translateX(-50%) translateY(20px); background: var(--surface); border: 1px solid var(--accent); border-radius: 14px; padding: 14px 18px; align-items: center; gap: 16px; box-shadow: var(--shadow); z-index: 3000; opacity: 0; transition: all 0.3s var(--spring); backdrop-filter: blur(16px); max-width: 92vw; }
+        #update-toast.on { display: flex; opacity: 1; transform: translateX(-50%) translateY(0); }
+        #update-toast span { font-size: 13.5px; color: var(--text); font-weight: 500; white-space: nowrap; }
+        #update-toast button { background: var(--accent); color: #1a1206; border: none; padding: 8px 16px; border-radius: 8px; font-weight: 700; font-size: 12.5px; cursor: pointer; white-space: nowrap; transition: transform 0.15s var(--spring); }
+        [data-theme="light"] #update-toast button { color: #fff; }
+        #update-toast button:hover { transform: scale(1.04); }
+        @media (max-width: 500px) { #update-toast { flex-direction: column; text-align: center; bottom: calc(var(--nav-height) + env(safe-area-inset-bottom)); } }
 
         /* PRINT STYLES */
         #print-area { display: none; }
@@ -827,6 +836,12 @@
                 <button class="btn btn-outline" style="margin-bottom:0; width:auto; padding:10px 20px;" onclick="exportHistoryCSV()">Export CSV</button>
             </div>
         </div>
+    </div>
+
+    <!-- UPDATE AVAILABLE TOAST -->
+    <div id="update-toast">
+        <span>A new version of CapHub is available.</span>
+        <button id="update-toast-btn">Update &amp; Reload</button>
     </div>
 
     <!-- INVISIBLE PRINT AREA -->
@@ -2229,8 +2244,41 @@
         // PWA SERVICE WORKER REGISTRATION
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js').catch(err => console.log('SW registration failed:', err));
+                navigator.serviceWorker.register('./sw.js').then((reg) => {
+                    // A worker was already waiting when we registered (e.g. tab was open across an update)
+                    if (reg.waiting) showUpdateToast(reg);
+
+                    reg.addEventListener('updatefound', () => {
+                        const newWorker = reg.installing;
+                        if (!newWorker) return;
+                        newWorker.addEventListener('statechange', () => {
+                            // 'installed' + an existing controller = genuine update, not first install
+                            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                showUpdateToast(reg);
+                            }
+                        });
+                    });
+                }).catch(err => console.log('SW registration failed:', err));
+
+                // Reload once the new worker actually takes control, but only after the person
+                // has explicitly asked for it via the toast - never yank the page out from under
+                // a mid-calculation session on its own.
+                let reloaded = false;
+                navigator.serviceWorker.addEventListener('controllerchange', () => {
+                    if (reloaded) return;
+                    reloaded = true;
+                    window.location.reload();
+                });
             });
+        }
+
+        function showUpdateToast(reg) {
+            const el = document.getElementById('update-toast');
+            if (!el || el.classList.contains('on')) return;
+            el.classList.add('on');
+            document.getElementById('update-toast-btn').onclick = () => {
+                if (reg.waiting) reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+            };
         }
 
         // --- INIT ALL ---
