@@ -6,10 +6,15 @@
     <title>Capacitor Production Hub</title>
     <meta name="theme-color" content="#14130F">
     <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" href="https://i.postimg.cc/7ZqG3fCq/Cap-Formula.png">
     <link rel="apple-touch-icon" href="https://i.postimg.cc/7ZqG3fCq/Cap-Formula.png">
     
     <!-- Space Grotesk (display) / Inter (body) / JetBrains Mono (numeric readouts) -->
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Used only by the Share button to render a ticket as a PDF for native sharing -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
     
     <style>
         /* THEME VARIABLES */
@@ -129,8 +134,8 @@
         .readonly-field { background: var(--read-only) !important; border-color: transparent !important; color: var(--muted); pointer-events: none; }
 
         /* BUTTONS */
-        .btn-row { display: flex; gap: 12px; margin-bottom: 16px; }
-        .btn { flex: 1; padding: 14px; font-family: var(--font-main); font-size: 13px; font-weight: 700; color: #fff; border: none; border-radius: 10px; cursor: pointer; transition: transform 0.15s var(--spring), box-shadow 0.2s var(--ease), background 0.2s var(--ease); text-transform: uppercase; letter-spacing: 0.8px;}
+        .btn-row { display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+        .btn { flex: 1; min-width: 130px; padding: 14px; font-family: var(--font-main); font-size: 13px; font-weight: 700; color: #fff; border: none; border-radius: 10px; cursor: pointer; transition: transform 0.15s var(--spring), box-shadow 0.2s var(--ease), background 0.2s var(--ease); text-transform: uppercase; letter-spacing: 0.8px;}
         .btn:hover { transform: translateY(-2px); box-shadow: 0 8px 20px var(--accent-bg); }
         .btn:active { transform: translateY(1px) scale(0.98); }
         .btn-primary { background: var(--accent); color: #1a1206; box-shadow: 0 4px 15px var(--accent-bg); }
@@ -172,7 +177,8 @@
         .winding-svg circle, .winding-svg line, .winding-svg text { transition: all 0.4s var(--ease); }
         .wd-stats { display: flex; justify-content: space-around; margin-top: 10px; padding-top: 12px; border-top: 1px dashed var(--border); }
         .wd-stats div { text-align: center; }
-        .wd-stats span { display: block; font-family: var(--font-mono); font-weight: 700; font-size: 15px; color: var(--accent); font-variant-numeric: tabular-nums; }
+        .wd-stats span { display: block; font-family: var(--font-mono); font-weight: 600; font-size: 14px; color: var(--text); font-variant-numeric: tabular-nums; }
+        .wd-stats span.wd-hl { color: var(--accent); font-weight: 700; font-size: 17px; }
         .wd-stats label { font-size: 9.5px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; margin-top: 2px; }
 
         /* TOGGLE GROUP (TCW) */
@@ -238,53 +244,60 @@
         @media (max-width: 500px) { #update-toast { flex-direction: column; text-align: center; bottom: calc(var(--nav-height) + env(safe-area-inset-bottom)); } }
 
         /* PRINT STYLES */
-        #print-area { display: none; }
+        /* TICKET STYLES - always active (not just @media print) so the Share button can render
+           the exact same ticket off-screen for PDF/image capture via html2canvas. */
+        #print-area { display: none; background: #ffffff; color: #1a1410; padding: 0; font-size: 11px; line-height: 1.25; width: 100%; }
+        #print-area.share-capture { display: block; position: fixed; left: -9999px; top: 0; width: 780px; padding: 24px; z-index: -1; }
+
+        .pt-letterhead { display: flex; justify-content: space-between; align-items: center; border-bottom: 2.5px solid #b8752f; padding-bottom: 8px; margin-bottom: 2px; }
+        .pt-brand { display: flex; align-items: center; gap: 8px; }
+        .pt-brand img { width: 30px; height: 30px; border-radius: 6px; }
+        .pt-brand-name { font-size: 15px; font-weight: 800; letter-spacing: -0.3px; line-height: 1.1; }
+        .pt-brand-tag { font-size: 8.5px; color: #6b6255; text-transform: uppercase; letter-spacing: .8px; }
+        .pt-idbox { text-align: right; font-size: 9px; color: #443c30; line-height: 1.4; }
+        .pt-idbox b { color: #1a1410; font-family: 'Courier New', monospace; }
+
+        .pt-title-row { display: flex; justify-content: space-between; align-items: flex-end; margin: 8px 0 6px 0; }
+        .pt-title-row .pt-ttl { font-size: 14.5px; font-weight: 800; }
+        .pt-title-row .pt-sub { font-size: 9px; color: #6b6255; margin-top: 1px; }
+
+        .pt-grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; align-items: start; }
+
+        .pt-table { width: 100%; border-collapse: collapse; margin-top: 6px; font-size: 9.8px; }
+        .pt-table th, .pt-table td { border: 1px solid #c9bfa8; padding: 2.5px 6px; text-align: left; line-height: 1.2; }
+        .pt-table th { background-color: #f0e9da; color: #1a1410; font-weight: bold;}
+        .pt-section { font-size: 9.5px; font-weight: 800; text-transform: uppercase; letter-spacing: .4px; margin: 6px 0 0 0; padding: 3px 8px; border: 1px solid #c9bfa8; border-bottom: none; border-radius: 4px 4px 0 0; }
+        .pt-input-hdr { background: #e4d3b8; color: #4a3418; }
+        .pt-output-hdr { background: #e8c9b8; color: #5c2c14; }
+        .pt-final-hdr { background: #cfe0cd; color: #234a1f; }
+        .pt-table.pt-sec-body { margin-top: 0; border-radius: 0 0 4px 4px; overflow: hidden; }
+        .pt-table td.pt-key { font-weight: 600; width: 58%; color: #443c30; }
+        .pt-table td.pt-hl { font-weight: bold; background: #fbeecb; }
+        .pt-meta { font-size: 10px; color: #443c30; margin-bottom: 3px; }
+        .pt-blank { color: #999; font-style: italic; }
+
+        .pt-diagram-panel { display: flex; align-items: center; gap: 12px; border: 1px solid #c9bfa8; border-radius: 6px; padding: 6px 12px; margin-top: 6px; background: #faf6ec; }
+        .pt-diagram-panel svg { width: 78px; height: 62px; flex-shrink: 0; }
+        .pt-diagram-stats { display: flex; gap: 16px; flex-wrap: wrap; }
+        .pt-diagram-stats div { text-align: left; }
+        .pt-diagram-stats span { display: block; font-family: 'Courier New', monospace; font-weight: 700; font-size: 11.5px; color: #8a4f1e; }
+        .pt-diagram-stats label { font-size: 7.5px; color: #6b6255; text-transform: uppercase; letter-spacing: .4px; }
+
+        .pt-signoff { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-top: 16px; padding-top: 2px; }
+        .pt-signoff div { border-top: 1px solid #443c30; padding-top: 4px; font-size: 8.5px; color: #6b6255; text-transform: uppercase; letter-spacing: .4px; }
+        .pt-signoff div span { display: block; height: 18px; }
+
+        .pt-footer-note { margin-top: 8px; font-size: 7.5px; color: #9b9182; text-align: center; border-top: 1px dashed #c9bfa8; padding-top: 5px; }
+
         @media print {
             @page { size: A4 portrait; margin: 10mm 11mm; }
             html, body { height: auto !important; }
-            body * { visibility: hidden; }
-            #print-area, #print-area * { visibility: visible; }
-            #print-area { display: block; position: absolute; left: 0; top: 0; width: 100%; background: #ffffff !important; color: #1a1410 !important; padding: 0; font-size: 11px; line-height: 1.25; }
-
-            .pt-letterhead { display: flex; justify-content: space-between; align-items: center; border-bottom: 2.5px solid #b8752f; padding-bottom: 8px; margin-bottom: 2px; }
-            .pt-brand { display: flex; align-items: center; gap: 8px; }
-            .pt-brand img { width: 30px; height: 30px; border-radius: 6px; }
-            .pt-brand-name { font-size: 15px; font-weight: 800; letter-spacing: -0.3px; line-height: 1.1; }
-            .pt-brand-tag { font-size: 8.5px; color: #6b6255; text-transform: uppercase; letter-spacing: .8px; }
-            .pt-idbox { text-align: right; font-size: 9px; color: #443c30; line-height: 1.4; }
-            .pt-idbox b { color: #1a1410; font-family: 'Courier New', monospace; }
-
-            .pt-title-row { display: flex; justify-content: space-between; align-items: flex-end; margin: 8px 0 6px 0; }
-            .pt-title-row .pt-ttl { font-size: 14.5px; font-weight: 800; }
-            .pt-title-row .pt-sub { font-size: 9px; color: #6b6255; margin-top: 1px; }
-
-            .pt-grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; align-items: start; }
-
-            .pt-table { width: 100%; border-collapse: collapse; margin-top: 6px; font-size: 9.8px; }
-            .pt-table th, .pt-table td { border: 1px solid #c9bfa8; padding: 2.5px 6px; text-align: left; line-height: 1.2; }
-            .pt-table th { background-color: #f0e9da !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; color: #1a1410; font-weight: bold;}
-            .pt-section { font-size: 9.5px; font-weight: 800; text-transform: uppercase; letter-spacing: .4px; margin: 6px 0 0 0; padding: 3px 8px; -webkit-print-color-adjust: exact; print-color-adjust: exact; border: 1px solid #c9bfa8; border-bottom: none; border-radius: 4px 4px 0 0; }
-            .pt-input-hdr { background: #e4d3b8 !important; color: #4a3418 !important; }
-            .pt-output-hdr { background: #e8c9b8 !important; color: #5c2c14 !important; }
-            .pt-final-hdr { background: #cfe0cd !important; color: #234a1f !important; }
-            .pt-table.pt-sec-body { margin-top: 0; border-radius: 0 0 4px 4px; overflow: hidden; }
-            .pt-table td.pt-key { font-weight: 600; width: 58%; color: #443c30; }
-            .pt-table td.pt-hl { font-weight: bold; background: #fbeecb !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-            .pt-meta { font-size: 10px; color: #443c30; margin-bottom: 3px; }
-            .pt-blank { color: #999; font-style: italic; }
-
-            .pt-diagram-panel { display: flex; align-items: center; gap: 12px; border: 1px solid #c9bfa8; border-radius: 6px; padding: 6px 12px; margin-top: 6px; background: #faf6ec !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-            .pt-diagram-panel svg { width: 78px; height: 62px; flex-shrink: 0; }
-            .pt-diagram-stats { display: flex; gap: 16px; flex-wrap: wrap; }
-            .pt-diagram-stats div { text-align: left; }
-            .pt-diagram-stats span { display: block; font-family: 'Courier New', monospace; font-weight: 700; font-size: 11.5px; color: #8a4f1e; }
-            .pt-diagram-stats label { font-size: 7.5px; color: #6b6255; text-transform: uppercase; letter-spacing: .4px; }
-
-            .pt-signoff { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-top: 16px; padding-top: 2px; }
-            .pt-signoff div { border-top: 1px solid #443c30; padding-top: 4px; font-size: 8.5px; color: #6b6255; text-transform: uppercase; letter-spacing: .4px; }
-            .pt-signoff div span { display: block; height: 18px; }
-
-            .pt-footer-note { margin-top: 8px; font-size: 7.5px; color: #9b9182; text-align: center; border-top: 1px dashed #c9bfa8; padding-top: 5px; }
+            /* display:none actually removes these from layout (zero height), unlike
+               visibility:hidden which leaves their full height in the document flow - that
+               leftover height was what caused extra blank pages after the ticket content. */
+            .hdr, .app-body, #bnav, #diag-overlay, #hist-overlay, #update-toast { display: none !important; }
+            #print-area { display: block !important; position: static !important; left: auto !important; top: auto !important; z-index: auto !important; }
+            .pt-table th, .pt-section, .pt-diagram-panel, .pt-table td.pt-hl { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         }
     </style>
 </head>
@@ -355,25 +368,27 @@
                     <div class="card">
                         <div class="card-title">Winding Parameters</div>
                         <div class="input-grid">
-                            <div class="input-group"><label>Target MFD</label><input type="number" id="m1_mfd" placeholder="e.g. 5" step="0.1" oninput="calculateM1()"></div>
-                            <div class="input-group"><label>Pos Tol %</label><input type="number" id="m1_posTol" placeholder="e.g. 0" step="0.1" oninput="calculateM1()"></div>
+                            <div class="input-group"><label>Target MFD</label><input type="number" id="m1_mfd" value="5" step="0.1" oninput="calculateM1()"></div>
+                            <div class="input-group"><label>Pos Tol %</label><input type="number" id="m1_posTol" value="0" step="0.1" oninput="calculateM1()"></div>
                             <div class="input-group full"><label>Fin. MFD</label><input type="number" id="m1_finMfd" value="" readonly class="readonly-field"></div>
-                            <div class="input-group"><label>Thickness (µm)</label><input type="number" id="m1_thick" placeholder="e.g. 6" step="0.1" oninput="calculateM1()"></div>
-                            <div class="input-group"><label>Width (mm)</label><input type="number" id="m1_width" placeholder="e.g. 30" step="0.1" oninput="calculateM1()"></div>
-                            <div class="input-group"><label>Free Margin (mm)</label><input type="number" id="m1_margin" placeholder="e.g. 1.5" step="0.1" oninput="calculateM1()"></div>
-                            <div class="input-group"><label>Offset (mm)</label><input type="number" id="m1_offset" placeholder="e.g. 1" step="0.1" oninput="calculateM1()"></div>
-                            <div class="input-group"><label>Core OD (mm)</label><input type="number" id="m1_coreOd" placeholder="e.g. 9" step="0.1" oninput="calculateM1()"></div>
-                            <div class="input-group"><label>Cover Turns</label><input type="number" id="m1_covTurns" placeholder="e.g. 10" step="1" oninput="calculateM1()"></div>
+                            <div class="input-group"><label>Thickness (µm)</label><input type="number" id="m1_thick" value="6" step="0.1" oninput="calculateM1()"></div>
+                            <div class="input-group"><label>Width (mm)</label><input type="number" id="m1_width" value="30" step="0.1" oninput="calculateM1()"></div>
+                            <div class="input-group"><label>Free Margin (mm)</label><input type="number" id="m1_margin" value="1.5" step="0.1" oninput="calculateM1()"></div>
+                            <div class="input-group"><label>Offset (mm)</label><input type="number" id="m1_offset" value="1" step="0.1" oninput="calculateM1()"></div>
+                            <div class="input-group"><label>Core OD (mm)</label><input type="number" id="m1_coreOd" value="9" step="0.1" oninput="calculateM1()"></div>
+                            <div class="input-group"><label>Cover Turns</label><input type="number" id="m1_covTurns" value="10" step="1" oninput="calculateM1()"></div>
                         </div>
                         <div class="btn-row">
                             <button class="btn btn-primary btn-force" data-req="m1_mfd m1_thick m1_width m1_margin m1_offset m1_coreOd m1_covTurns" data-tab="m1" onclick="calculateM1()">Force Calc</button>
                             <button class="btn btn-outline" onclick="printTicket('m1')">🖨️ Print Ticket</button>
+                            <button class="btn btn-outline" onclick="shareTicket('m1')">📤 Share</button>
                         </div>
                         <div class="winding-diagram-wrap">
                             <div class="wd-eyebrow">Cross Section — Live</div>
                             <svg id="windingDiagram" viewBox="0 0 320 240" class="winding-svg"></svg>
                             <div class="wd-stats">
-                                <div><span id="wd-turns">—</span><label>Turns</label></div>
+                                <div><span id="wd-dia" class="wd-hl">—</span><label>Dia (mm)</label></div>
+                                <div><span id="wd-turns" class="wd-hl">—</span><label>Turns</label></div>
                                 <div><span id="wd-length">—</span><label>Length (m)</label></div>
                                 <div><span id="wd-weight">—</span><label>Weight (g)</label></div>
                             </div>
@@ -382,7 +397,7 @@
                             <div class="result-row"><span class="result-label">Length (m)</span><span class="result-val highlight-val" id="m1_res_length">0.000</span></div>
                             <div class="result-row"><span class="result-label">Weight of Element (g)</span><span class="result-val" id="m1_res_wtEle">0.000</span></div>
                             <div class="result-row"><span class="result-label">Dia Incl Cover (mm)</span><span class="result-val highlight-val" id="m1_res_dia">0.000</span></div>
-                            <div class="result-row"><span class="result-label">No of Turns</span><span class="result-val" id="m1_res_turns">0.000</span></div>
+                            <div class="result-row"><span class="result-label">No of Turns</span><span class="result-val highlight-val" id="m1_res_turns">0.000</span></div>
                             <div class="result-row"><span class="result-label">Cover Film Wt (g)</span><span class="result-val" id="m1_res_covWt">0.000</span></div>
                             <div class="result-row"><span class="result-label">SA / MFD</span><span class="result-val" id="m1_res_sa">0.000</span></div>
                             <div class="result-row"><span class="result-label">Weight of Core (g)</span><span class="result-val" id="m1_res_coreWt">0.000</span></div>
@@ -405,11 +420,11 @@
                         <div class="card-title">Potting Recipe</div>
                         <div class="input-grid">
                             <div class="input-group full"><label>Element Vol (cm³)</label><input type="number" id="m1_eleVol" value="" readonly class="readonly-field"></div>
-                            <div class="input-group"><label>Can Inner Dia (mm)</label><input type="number" id="m1_canId" placeholder="e.g. 26" step="0.1" oninput="calculateM1()"></div>
-                            <div class="input-group"><label>Fit Clearance (mm)</label><input type="number" id="m1_clearance" placeholder="e.g. 6" step="0.1" oninput="calculateM1()"></div>
-                            <div class="input-group"><label>Height Above Ele (mm)</label><input type="number" id="m1_htAbove" placeholder="e.g. 5" step="0.1" oninput="calculateM1()"></div>
-                            <div class="input-group"><label>Resin Density (g/cm³)</label><input type="number" id="m1_density" placeholder="e.g. 1.41" step="0.01" oninput="calculateM1()"></div>
-                            <div class="input-group"><label>Hardener Ratio (%)</label><input type="number" id="m1_ratio" placeholder="e.g. 20" step="1" oninput="calculateM1()"></div>
+                            <div class="input-group"><label>Can Inner Dia (mm)</label><input type="number" id="m1_canId" value="26" step="0.1" oninput="calculateM1()"></div>
+                            <div class="input-group"><label>Fit Clearance (mm)</label><input type="number" id="m1_clearance" value="6" step="0.1" oninput="calculateM1()"></div>
+                            <div class="input-group"><label>Height Above Ele (mm)</label><input type="number" id="m1_htAbove" value="5" step="0.1" oninput="calculateM1()"></div>
+                            <div class="input-group"><label>Resin Density (g/cm³)</label><input type="number" id="m1_density" value="1.41" step="0.01" oninput="calculateM1()"></div>
+                            <div class="input-group"><label>Hardener Ratio (%)</label><input type="number" id="m1_ratio" value="20" step="1" oninput="calculateM1()"></div>
                         </div>
                         <button class="btn btn-potting btn-force" data-req="m1_mfd m1_thick m1_width m1_margin m1_offset m1_coreOd m1_covTurns m1_canId m1_htAbove m1_density m1_ratio" data-tab="m1" onclick="calculateM1()">Force Generate</button>
                         <div class="results">
@@ -433,9 +448,9 @@
                     <div class="card">
                         <div class="card-title">INPUT - kVAr to µF</div>
                         <div class="input-grid">
-                            <div class="input-group"><label>kVAr</label><input type="number" id="m2_kvar" placeholder="e.g. 1" step="0.1" oninput="calculateM2_Left()"></div>
-                            <div class="input-group"><label>Voltage (V)</label><input type="number" id="m2_vin" placeholder="e.g. 415" step="1" oninput="calculateM2_Left()"></div>
-                            <div class="input-group"><label>Frequency (Hz)</label><input type="number" id="m2_freq1" placeholder="e.g. 50" step="1" oninput="calculateM2_Left()"></div>
+                            <div class="input-group"><label>kVAr</label><input type="number" id="m2_kvar" value="1" step="0.1" oninput="calculateM2_Left()"></div>
+                            <div class="input-group"><label>Voltage (V)</label><input type="number" id="m2_vin" value="415" step="1" oninput="calculateM2_Left()"></div>
+                            <div class="input-group"><label>Frequency (Hz)</label><input type="number" id="m2_freq1" value="50" step="1" oninput="calculateM2_Left()"></div>
                             <div class="input-group"><label>Phase</label><select id="m2_phase" onchange="updatePhaseLabels(); calculateM2_Left();"><option value="3">3</option><option value="1">1</option></select></div>
                         </div>
                         <button class="btn btn-primary btn-force" data-req="m2_kvar m2_vin m2_freq1" onclick="calculateM2_Left()">Force Calculate</button>
@@ -448,9 +463,9 @@
                     <div class="card alt-card">
                         <div class="card-title">INPUT - µF to kVAr</div>
                         <div class="input-grid">
-                            <div class="input-group full"><label>Enter Frequency (Hz)</label><input type="number" id="m2_freq2" placeholder="e.g. 50" step="1" oninput="calculateM2_Right()"></div>
-                            <div class="input-group"><label id="lbl_mfd_total">Enter 3-Φ Total µF</label><input type="number" id="m2_mfdIn" placeholder="e.g. 9.24" step="0.01" oninput="calculateM2_Right()"></div>
-                            <div class="input-group"><label>Enter Volts</label><input type="number" id="m2_vout" placeholder="e.g. 440" step="1" oninput="calculateM2_Right()"></div>
+                            <div class="input-group full"><label>Enter Frequency (Hz)</label><input type="number" id="m2_freq2" value="50" step="1" oninput="calculateM2_Right()"></div>
+                            <div class="input-group"><label id="lbl_mfd_total">Enter 3-Φ Total µF</label><input type="number" id="m2_mfdIn" value="9.24" step="0.01" oninput="calculateM2_Right()"></div>
+                            <div class="input-group"><label>Enter Volts</label><input type="number" id="m2_vout" value="440" step="1" oninput="calculateM2_Right()"></div>
                         </div>
                         <button class="btn btn-alt btn-force" data-req="m2_freq2 m2_mfdIn m2_vout" onclick="calculateM2_Right()">Force Calculate</button>
                         <div class="results">
@@ -461,26 +476,27 @@
                         <div class="card-title">FINAL DATA - Winding Parameters</div>
                         <div class="input-grid">
                             <div class="input-group"><label>Film Type</label><select id="m2_filmType" onchange="calculateM2Winding()"><option value="SLOPE/WC">SLOPE/WC</option><option value="SERIES">SERIES</option></select></div>
-                            <div class="input-group"><label>MFD (Drawing)</label><input type="number" id="m2_w_mfd" placeholder="e.g. 6.16" step="0.01" oninput="calculateM2Winding()"></div>
-                            <div class="input-group"><label>Pos Tol %</label><input type="number" id="m2_w_posTol" placeholder="e.g. 0" step="0.1" oninput="calculateM2Winding()"></div>
+                            <div class="input-group"><label>MFD (Drawing)</label><input type="number" id="m2_w_mfd" value="6.16" step="0.01" oninput="calculateM2Winding()"></div>
+                            <div class="input-group"><label>Pos Tol %</label><input type="number" id="m2_w_posTol" value="0" step="0.1" oninput="calculateM2Winding()"></div>
                             <div class="input-group"><label>Fin. MFD</label><input type="number" id="m2_w_finMfd" value="" readonly class="readonly-field"></div>
-                            <div class="input-group"><label>Thickness (µm)</label><input type="number" id="m2_w_thick" placeholder="e.g. 6" step="0.1" oninput="calculateM2Winding()"></div>
-                            <div class="input-group"><label>Width (mm)</label><input type="number" id="m2_w_width" placeholder="e.g. 37.5" step="0.1" oninput="calculateM2Winding()"></div>
-                            <div class="input-group"><label>Core OD (mm)</label><input type="number" id="m2_w_coreOd" placeholder="e.g. 9" step="0.1" oninput="calculateM2Winding()"></div>
-                            <div class="input-group"><label>Wt of Core (g)</label><input type="number" id="m2_w_coreWt" placeholder="e.g. 1" step="0.1" oninput="calculateM2Winding()"></div>
-                            <div class="input-group full"><label>Cover Turns</label><input type="number" id="m2_w_covTurns" placeholder="e.g. 10" step="1" oninput="calculateM2Winding()"></div>
-                            <div class="input-group full"><label>Target Can Dia (mm) — optional</label><input type="number" id="m2_w_canDia" placeholder="e.g. 54" step="0.1" oninput="calculateM2Winding()"></div>
-                            <div class="input-group full"><label>Fit Clearance (mm)</label><input type="number" id="m2_w_clearance" placeholder="e.g. 9" step="0.1" oninput="calculateM2Winding()"></div>
+                            <div class="input-group"><label>Thickness (µm)</label><input type="number" id="m2_w_thick" value="6" step="0.1" oninput="calculateM2Winding()"></div>
+                            <div class="input-group"><label>Width (mm)</label><input type="number" id="m2_w_width" value="37.5" step="0.1" oninput="calculateM2Winding()"></div>
+                            <div class="input-group"><label>Core OD (mm)</label><input type="number" id="m2_w_coreOd" value="9" step="0.1" oninput="calculateM2Winding()"></div>
+                            <div class="input-group"><label>Wt of Core (g)</label><input type="number" id="m2_w_coreWt" value="1" step="0.1" oninput="calculateM2Winding()"></div>
+                            <div class="input-group full"><label>Cover Turns</label><input type="number" id="m2_w_covTurns" value="10" step="1" oninput="calculateM2Winding()"></div>
+                            <div class="input-group full"><label>Target Can Dia (mm) — optional</label><input type="number" id="m2_w_canDia" value="54" step="0.1" oninput="calculateM2Winding()"></div>
+                            <div class="input-group full"><label>Fit Clearance (mm)</label><input type="number" id="m2_w_clearance" value="9" step="0.1" oninput="calculateM2Winding()"></div>
                         </div>
                         <div class="btn-row">
                             <button class="btn btn-potting btn-force" data-req="m2_w_mfd m2_w_thick m2_w_width m2_w_coreOd m2_w_coreWt m2_w_covTurns" data-tab="m2" onclick="calculateM2Winding()">Force Calc</button>
                             <button class="btn btn-outline" onclick="printTicket('m2')">🖨️ Print Ticket</button>
+                            <button class="btn btn-outline" onclick="shareTicket('m2')">📤 Share</button>
                         </div>
                         <div class="results" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
                             <div>
                                 <div class="result-row"><span class="result-label">Length (m)</span><span class="result-val potting-val" id="m2_res_len">0.000</span></div>
                                 <div class="result-row"><span class="result-label">Dia Incl Cover</span><span class="result-val potting-val" id="m2_res_dia">0.000</span></div>
-                                <div class="result-row"><span class="result-label">No of Turns</span><span class="result-val" id="m2_res_turns">0.000</span></div>
+                                <div class="result-row"><span class="result-label">No of Turns</span><span class="result-val potting-val" id="m2_res_turns">0.000</span></div>
                                 <div class="result-row"><span class="result-label">SA / MFD</span><span class="result-val" id="m2_res_sa">0.000</span></div>
                             </div>
                             <div>
@@ -502,35 +518,36 @@
                     <div class="card dcw-card full-width">
                         <div class="card-title">Double Concentric Winding</div>
                         <div class="input-grid">
-                            <div class="input-group"><label>Target MFD 1</label><input type="number" id="m3_mfd1" placeholder="e.g. 5" step="0.1" oninput="calculateM3()"></div>
-                            <div class="input-group"><label>Target MFD 2</label><input type="number" id="m3_mfd2" placeholder="e.g. 55" step="0.1" oninput="calculateM3()"></div>
-                            <div class="input-group"><label>Pos Tol %</label><input type="number" id="m3_posTol" placeholder="e.g. 0" step="0.1" oninput="calculateM3()"></div>
-                            <div class="input-group"><label>Core OD (mm)</label><input type="number" id="m3_coreOd" placeholder="e.g. 9" step="0.1" oninput="calculateM3()"></div>
+                            <div class="input-group"><label>Target MFD 1</label><input type="number" id="m3_mfd1" value="5" step="0.1" oninput="calculateM3()"></div>
+                            <div class="input-group"><label>Target MFD 2</label><input type="number" id="m3_mfd2" value="55" step="0.1" oninput="calculateM3()"></div>
+                            <div class="input-group"><label>Pos Tol %</label><input type="number" id="m3_posTol" value="0" step="0.1" oninput="calculateM3()"></div>
+                            <div class="input-group"><label>Core OD (mm)</label><input type="number" id="m3_coreOd" value="9" step="0.1" oninput="calculateM3()"></div>
                             <div class="input-group"><label>Fin. MFD 1</label><input type="number" id="m3_finMfd1" value="" readonly class="readonly-field"></div>
                             <div class="input-group"><label>Fin. MFD 2</label><input type="number" id="m3_finMfd2" value="" readonly class="readonly-field"></div>
-                            <div class="input-group"><label>Thickness (µm)</label><input type="number" id="m3_thick" placeholder="e.g. 4.9" step="0.1" oninput="calculateM3()"></div>
-                            <div class="input-group"><label>Width (mm)</label><input type="number" id="m3_width" placeholder="e.g. 75" step="0.1" oninput="calculateM3()"></div>
-                            <div class="input-group"><label>Free Margin (mm)</label><input type="number" id="m3_margin" placeholder="e.g. 2" step="0.1" oninput="calculateM3()"></div>
-                            <div class="input-group"><label>Offset (mm)</label><input type="number" id="m3_offset" placeholder="e.g. 1" step="0.1" oninput="calculateM3()"></div>
-                            <div class="input-group"><label>Wt of Core (g)</label><input type="number" id="m3_coreWt" placeholder="e.g. 1" step="0.1" oninput="calculateM3()"></div>
-                            <div class="input-group"><label>Cover Turns (Out)</label><input type="number" id="m3_covTurns" placeholder="e.g. 10" step="1" oninput="calculateM3()"></div>
+                            <div class="input-group"><label>Thickness (µm)</label><input type="number" id="m3_thick" value="4.9" step="0.1" oninput="calculateM3()"></div>
+                            <div class="input-group"><label>Width (mm)</label><input type="number" id="m3_width" value="75" step="0.1" oninput="calculateM3()"></div>
+                            <div class="input-group"><label>Free Margin (mm)</label><input type="number" id="m3_margin" value="2" step="0.1" oninput="calculateM3()"></div>
+                            <div class="input-group"><label>Offset (mm)</label><input type="number" id="m3_offset" value="1" step="0.1" oninput="calculateM3()"></div>
+                            <div class="input-group"><label>Wt of Core (g)</label><input type="number" id="m3_coreWt" value="1" step="0.1" oninput="calculateM3()"></div>
+                            <div class="input-group"><label>Cover Turns (Out)</label><input type="number" id="m3_covTurns" value="10" step="1" oninput="calculateM3()"></div>
                         </div>
                         <div class="btn-row">
                             <button class="btn btn-dcw btn-force" data-req="m3_mfd1 m3_mfd2 m3_coreOd m3_thick m3_width m3_margin m3_offset m3_coreWt m3_covTurns" data-tab="m3" onclick="calculateM3()">Force Calc</button>
                             <button class="btn btn-outline" onclick="printTicket('m3')">🖨️ Print Ticket</button>
+                            <button class="btn btn-outline" onclick="shareTicket('m3')">📤 Share</button>
                         </div>
                         <div class="results" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
                             <div>
                                 <div class="results-header" style="color: var(--warning);">Dimensions (In / Out)</div>
                                 <div class="result-row"><span class="result-label">Length (L1/L2)</span><span class="result-val dcw-highlight" id="m3_res_lens">0 / 0 m</span></div>
                                 <div class="result-row"><span class="result-label">Ele Dia (D1/D2)</span><span class="result-val dcw-highlight" id="m3_res_dias">0 / 0 mm</span></div>
-                                <div class="result-row"><span class="result-label">Turns (N1/N2)</span><span class="result-val" id="m3_res_turns">0 / 0</span></div>
+                                <div class="result-row"><span class="result-label">Turns (N1/N2)</span><span class="result-val dcw-highlight" id="m3_res_turns">0 / 0</span></div>
                                 <div class="result-row"><span class="result-label">Wts (W1/W2)</span><span class="result-val" id="m3_res_wts">0 / 0 g</span></div>
                             </div>
                             <div>
                                 <div class="results-header" style="color: var(--warning);">Final Assembly</div>
                                 <div class="result-row"><span class="result-label">Outer Cover Wt</span><span class="result-val" id="m3_res_covWt">0.000 g</span></div>
-                                <div class="result-row"><span class="result-label">Total Turns</span><span class="result-val" id="m3_res_totTurns">0</span></div>
+                                <div class="result-row"><span class="result-label">Total Turns</span><span class="result-val dcw-highlight" id="m3_res_totTurns">0</span></div>
                                 <div class="result-row"><span class="result-label">Final Dia (w/ Cover)</span><span class="result-val dcw-highlight" id="m3_res_totDia">0.00 mm</span></div>
                                 <div class="result-row" style="border-top: 2px solid var(--border); padding-top: 12px; margin-top: 6px;">
                                     <span class="result-label" style="font-weight:800; color:var(--text)">Total Element Wt.</span><span class="result-val dcw-highlight" style="font-size:20px" id="m3_res_totWt">0.000 g</span>
@@ -556,33 +573,34 @@
                         <div class="card tcw-card full-width">
                             <div class="card-title">TCW MFD - Custom Inputs</div>
                             <div class="input-grid">
-                                <div class="input-group"><label>MFD 1 (Inner)</label><input type="number" id="m4_mfd1" placeholder="e.g. 2.5" step="0.1" oninput="calculateTCW_MFD()"></div>
-                                <div class="input-group"><label>MFD 2 (Middle)</label><input type="number" id="m4_mfd2" placeholder="e.g. 5" step="0.1" oninput="calculateTCW_MFD()"></div>
-                                <div class="input-group"><label>MFD 3 (Outer)</label><input type="number" id="m4_mfd3" placeholder="e.g. 7.5" step="0.1" oninput="calculateTCW_MFD()"></div>
-                                <div class="input-group"><label>Pos Tol %</label><input type="number" id="m4_posTol" placeholder="e.g. 0" step="0.1" oninput="calculateTCW_MFD()"></div>
-                                <div class="input-group"><label>Thickness (µm)</label><input type="number" id="m4_thick" placeholder="e.g. 5.9" step="0.1" oninput="calculateTCW_MFD()"></div>
-                                <div class="input-group"><label>Width (mm)</label><input type="number" id="m4_width" placeholder="e.g. 37.5" step="0.1" oninput="calculateTCW_MFD()"></div>
-                                <div class="input-group"><label>Free Margin (mm)</label><input type="number" id="m4_margin" placeholder="e.g. 2.5" step="0.1" oninput="calculateTCW_MFD()"></div>
-                                <div class="input-group"><label>Offset (mm)</label><input type="number" id="m4_offset" placeholder="e.g. 1" step="0.1" oninput="calculateTCW_MFD()"></div>
-                                <div class="input-group"><label>Core OD (mm)</label><input type="number" id="m4_coreOd" placeholder="e.g. 9" step="0.1" oninput="calculateTCW_MFD()"></div>
-                                <div class="input-group"><label>Cover Turns (Out)</label><input type="number" id="m4_covTurns" placeholder="e.g. 10" step="1" oninput="calculateTCW_MFD()"></div>
-                                <div class="input-group"><label>Wt of Core (g)</label><input type="number" id="m4_coreWt" placeholder="e.g. 1" step="0.1" oninput="calculateTCW_MFD()"></div>
+                                <div class="input-group"><label>MFD 1 (Inner)</label><input type="number" id="m4_mfd1" value="2.5" step="0.1" oninput="calculateTCW_MFD()"></div>
+                                <div class="input-group"><label>MFD 2 (Middle)</label><input type="number" id="m4_mfd2" value="5" step="0.1" oninput="calculateTCW_MFD()"></div>
+                                <div class="input-group"><label>MFD 3 (Outer)</label><input type="number" id="m4_mfd3" value="7.5" step="0.1" oninput="calculateTCW_MFD()"></div>
+                                <div class="input-group"><label>Pos Tol %</label><input type="number" id="m4_posTol" value="0" step="0.1" oninput="calculateTCW_MFD()"></div>
+                                <div class="input-group"><label>Thickness (µm)</label><input type="number" id="m4_thick" value="5.9" step="0.1" oninput="calculateTCW_MFD()"></div>
+                                <div class="input-group"><label>Width (mm)</label><input type="number" id="m4_width" value="37.5" step="0.1" oninput="calculateTCW_MFD()"></div>
+                                <div class="input-group"><label>Free Margin (mm)</label><input type="number" id="m4_margin" value="2.5" step="0.1" oninput="calculateTCW_MFD()"></div>
+                                <div class="input-group"><label>Offset (mm)</label><input type="number" id="m4_offset" value="1" step="0.1" oninput="calculateTCW_MFD()"></div>
+                                <div class="input-group"><label>Core OD (mm)</label><input type="number" id="m4_coreOd" value="9" step="0.1" oninput="calculateTCW_MFD()"></div>
+                                <div class="input-group"><label>Cover Turns (Out)</label><input type="number" id="m4_covTurns" value="10" step="1" oninput="calculateTCW_MFD()"></div>
+                                <div class="input-group"><label>Wt of Core (g)</label><input type="number" id="m4_coreWt" value="1" step="0.1" oninput="calculateTCW_MFD()"></div>
                             </div>
                             <div class="btn-row">
                                 <button class="btn btn-tcw btn-force" data-req="m4_mfd1 m4_mfd2 m4_mfd3 m4_thick m4_width m4_margin m4_offset m4_coreOd m4_covTurns m4_coreWt" data-tab="m4" onclick="calculateTCW_MFD()">Force Calc</button>
                                 <button class="btn btn-outline" onclick="printTicket('m4')">🖨️ Print Ticket</button>
+                                <button class="btn btn-outline" onclick="shareTicket('m4')">📤 Share</button>
                             </div>
                             <div class="results" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
                                 <div>
                                     <div class="results-header" style="color: var(--purple);">Dimensions (In / Mid / Out)</div>
                                     <div class="result-row"><span class="result-label">L (m)</span><span class="result-val tcw-highlight" id="m4_res_lens">0 / 0 / 0</span></div>
                                     <div class="result-row"><span class="result-label">Dia (mm)</span><span class="result-val tcw-highlight" id="m4_res_dias">0 / 0 / 0</span></div>
-                                    <div class="result-row"><span class="result-label">Turns</span><span class="result-val" id="m4_res_turns">0 / 0 / 0</span></div>
+                                    <div class="result-row"><span class="result-label">Turns</span><span class="result-val tcw-highlight" id="m4_res_turns">0 / 0 / 0</span></div>
                                     <div class="result-row"><span class="result-label">Wts (g)</span><span class="result-val" id="m4_res_wts">0 / 0 / 0</span></div>
                                 </div>
                                 <div>
                                     <div class="results-header" style="color: var(--purple);">Final Assembly</div>
-                                    <div class="result-row"><span class="result-label">Total Turns</span><span class="result-val" id="m4_res_totTurns">0</span></div>
+                                    <div class="result-row"><span class="result-label">Total Turns</span><span class="result-val tcw-highlight" id="m4_res_totTurns">0</span></div>
                                     <div class="result-row"><span class="result-label">Final Dia (w/ Cov)</span><span class="result-val tcw-highlight" id="m4_res_totDia">0.00 mm</span></div>
                                     <div class="result-row" style="border-top: 2px solid var(--border); padding-top: 12px; margin-top: 6px;">
                                         <span class="result-label" style="font-weight:800; color:var(--text)">Total Element Wt.</span><span class="result-val tcw-highlight" style="font-size:20px" id="m4_res_totWt">0.000 g</span>
@@ -598,9 +616,9 @@
                             <div class="card">
                                 <div class="card-title">INPUT - kVAr to µF</div>
                                 <div class="input-grid">
-                                    <div class="input-group full"><label>kVAr</label><input type="number" id="m5_kvar" placeholder="e.g. 1" step="0.1" oninput="calculateM5_Left()"></div>
-                                    <div class="input-group"><label>Voltage (V)</label><input type="number" id="m5_vin" placeholder="e.g. 415" step="1" oninput="calculateM5_Left()"></div>
-                                    <div class="input-group"><label>Frequency (Hz)</label><input type="number" id="m5_freq1" placeholder="e.g. 50" step="1" oninput="calculateM5_Left()"></div>
+                                    <div class="input-group full"><label>kVAr</label><input type="number" id="m5_kvar" value="1" step="0.1" oninput="calculateM5_Left()"></div>
+                                    <div class="input-group"><label>Voltage (V)</label><input type="number" id="m5_vin" value="415" step="1" oninput="calculateM5_Left()"></div>
+                                    <div class="input-group"><label>Frequency (Hz)</label><input type="number" id="m5_freq1" value="50" step="1" oninput="calculateM5_Left()"></div>
                                 </div>
                                 <div class="results">
                                     <div class="result-row"><span class="result-label">MFD per Phase</span><span class="result-val highlight-val" id="m5_res_mfdEach">0.00</span></div>
@@ -610,9 +628,9 @@
                             <div class="card alt-card">
                                 <div class="card-title">INPUT - µF to kVAr</div>
                                 <div class="input-grid">
-                                    <div class="input-group full"><label>Enter 3-Φ Total µF</label><input type="number" id="m5_mfdIn" placeholder="e.g. 9.24" step="0.01" oninput="calculateM5_Right()"></div>
-                                    <div class="input-group"><label>Volts</label><input type="number" id="m5_vout" placeholder="e.g. 440" step="1" oninput="calculateM5_Right()"></div>
-                                    <div class="input-group"><label>Freq (Hz)</label><input type="number" id="m5_freq2" placeholder="e.g. 50" step="1" oninput="calculateM5_Right()"></div>
+                                    <div class="input-group full"><label>Enter 3-Φ Total µF</label><input type="number" id="m5_mfdIn" value="9.24" step="0.01" oninput="calculateM5_Right()"></div>
+                                    <div class="input-group"><label>Volts</label><input type="number" id="m5_vout" value="440" step="1" oninput="calculateM5_Right()"></div>
+                                    <div class="input-group"><label>Freq (Hz)</label><input type="number" id="m5_freq2" value="50" step="1" oninput="calculateM5_Right()"></div>
                                 </div>
                                 <div class="results">
                                     <div class="result-row" style="border:none;"><span class="result-label" style="color: var(--purple);">Total kVAr</span><span class="result-val alt-highlight" style="font-size:22px" id="m5_res_kvarOut">0.000</span></div>
@@ -623,30 +641,31 @@
                         <div class="card tcw-card full-width">
                             <div class="card-title">TCW KVAR Winding</div>
                             <div class="input-grid">
-                                <div class="input-group full"><label>MFD per Phase (from above)</label><input type="number" id="m5_w_mfd" placeholder="e.g. 12.5" step="0.01" oninput="calculateTCW_KVAR()"></div>
-                                <div class="input-group"><label>Pos Tol %</label><input type="number" id="m5_w_posTol" placeholder="e.g. 0" step="0.1" oninput="calculateTCW_KVAR()"></div>
-                                <div class="input-group"><label>Core OD (mm)</label><input type="number" id="m5_w_coreOd" placeholder="e.g. 9" step="0.1" oninput="calculateTCW_KVAR()"></div>
-                                <div class="input-group"><label>Thickness (µm)</label><input type="number" id="m5_w_thick" placeholder="e.g. 7.8" step="0.1" oninput="calculateTCW_KVAR()"></div>
-                                <div class="input-group"><label>Width (mm)</label><input type="number" id="m5_w_width" placeholder="e.g. 75" step="0.1" oninput="calculateTCW_KVAR()"></div>
-                                <div class="input-group"><label>Free Margin (mm)</label><input type="number" id="m5_w_margin" placeholder="e.g. 2" step="0.1" oninput="calculateTCW_KVAR()"></div>
-                                <div class="input-group"><label>Offset (mm)</label><input type="number" id="m5_w_offset" placeholder="e.g. 1" step="0.1" oninput="calculateTCW_KVAR()"></div>
-                                <div class="input-group"><label>Wt of Core (g)</label><input type="number" id="m5_w_coreWt" placeholder="e.g. 1" step="0.1" oninput="calculateTCW_KVAR()"></div>
-                                <div class="input-group"><label>Cover Turns</label><input type="number" id="m5_w_covTurns" placeholder="e.g. 10" step="1" oninput="calculateTCW_KVAR()"></div>
+                                <div class="input-group full"><label>MFD per Phase (from above)</label><input type="number" id="m5_w_mfd" value="12.5" step="0.01" oninput="calculateTCW_KVAR()"></div>
+                                <div class="input-group"><label>Pos Tol %</label><input type="number" id="m5_w_posTol" value="0" step="0.1" oninput="calculateTCW_KVAR()"></div>
+                                <div class="input-group"><label>Core OD (mm)</label><input type="number" id="m5_w_coreOd" value="9" step="0.1" oninput="calculateTCW_KVAR()"></div>
+                                <div class="input-group"><label>Thickness (µm)</label><input type="number" id="m5_w_thick" value="7.8" step="0.1" oninput="calculateTCW_KVAR()"></div>
+                                <div class="input-group"><label>Width (mm)</label><input type="number" id="m5_w_width" value="75" step="0.1" oninput="calculateTCW_KVAR()"></div>
+                                <div class="input-group"><label>Free Margin (mm)</label><input type="number" id="m5_w_margin" value="2" step="0.1" oninput="calculateTCW_KVAR()"></div>
+                                <div class="input-group"><label>Offset (mm)</label><input type="number" id="m5_w_offset" value="1" step="0.1" oninput="calculateTCW_KVAR()"></div>
+                                <div class="input-group"><label>Wt of Core (g)</label><input type="number" id="m5_w_coreWt" value="1" step="0.1" oninput="calculateTCW_KVAR()"></div>
+                                <div class="input-group"><label>Cover Turns</label><input type="number" id="m5_w_covTurns" value="10" step="1" oninput="calculateTCW_KVAR()"></div>
                             </div>
                             <div class="btn-row">
                             <button class="btn btn-tcw btn-force" data-req="m5_w_mfd m5_w_coreOd m5_w_thick m5_w_width m5_w_margin m5_w_offset m5_w_coreWt m5_w_covTurns" data-tab="m5" onclick="calculateTCW_KVAR()">Force Calc</button>
                                 <button class="btn btn-outline" onclick="printTicket('m5')">🖨️ Print Ticket</button>
+                                <button class="btn btn-outline" onclick="shareTicket('m5')">📤 Share</button>
                             </div>
                             <div class="results" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
                                 <div>
                                     <div class="results-header" style="color: var(--purple);">Dimensions (In / Mid / Out)</div>
                                     <div class="result-row"><span class="result-label">L (m)</span><span class="result-val tcw-highlight" id="m5_res_lens">0 / 0 / 0</span></div>
                                     <div class="result-row"><span class="result-label">Dia (mm)</span><span class="result-val tcw-highlight" id="m5_res_dias">0 / 0 / 0</span></div>
-                                    <div class="result-row"><span class="result-label">Turns</span><span class="result-val" id="m5_res_turns">0 / 0 / 0</span></div>
+                                    <div class="result-row"><span class="result-label">Turns</span><span class="result-val tcw-highlight" id="m5_res_turns">0 / 0 / 0</span></div>
                                 </div>
                                 <div>
                                     <div class="results-header" style="color: var(--purple);">Final Assembly</div>
-                                    <div class="result-row"><span class="result-label">Total Turns</span><span class="result-val" id="m5_res_totTurns">0</span></div>
+                                    <div class="result-row"><span class="result-label">Total Turns</span><span class="result-val tcw-highlight" id="m5_res_totTurns">0</span></div>
                                     <div class="result-row"><span class="result-label">Final Dia (w/ Cov)</span><span class="result-val tcw-highlight" id="m5_res_totDia">0.00 mm</span></div>
                                     <div class="result-row" style="border-top: 2px solid var(--border); padding-top: 12px; margin-top: 6px;">
                                         <span class="result-label" style="font-weight:800; color:var(--text)">Total Element Wt.</span><span class="result-val tcw-highlight" style="font-size:20px" id="m5_res_totWt">0.000 g</span>
@@ -664,22 +683,23 @@
                     <div class="card flat-card full-width">
                         <div class="card-title">Flat Element Parameters</div>
                         <div class="input-grid">
-                            <div class="input-group"><label>Target MFD</label><input type="number" id="f_mfd" placeholder="e.g. 8" step="0.1" oninput="calculateFlat()"></div>
-                            <div class="input-group"><label>Pos Tol %</label><input type="number" id="f_posTol" placeholder="e.g. 0" step="0.1" oninput="calculateFlat()"></div>
+                            <div class="input-group"><label>Target MFD</label><input type="number" id="f_mfd" value="8" step="0.1" oninput="calculateFlat()"></div>
+                            <div class="input-group"><label>Pos Tol %</label><input type="number" id="f_posTol" value="0" step="0.1" oninput="calculateFlat()"></div>
                             <div class="input-group full"><label>Fin. MFD</label><input type="number" id="f_finMfd" value="" readonly class="readonly-field"></div>
-                            <div class="input-group"><label>Thickness (µm)</label><input type="number" id="f_thick" placeholder="e.g. 5.9" step="0.1" oninput="calculateFlat()"></div>
-                            <div class="input-group"><label>Width (mm)</label><input type="number" id="f_width" placeholder="e.g. 37.5" step="0.1" oninput="calculateFlat()"></div>
-                            <div class="input-group"><label>Free Margin (mm)</label><input type="number" id="f_margin" placeholder="e.g. 1.5" step="0.1" oninput="calculateFlat()"></div>
-                            <div class="input-group"><label>Offset (mm)</label><input type="number" id="f_offset" placeholder="e.g. 1" step="0.1" oninput="calculateFlat()"></div>
-                            <div class="input-group"><label>Core OD (mm)</label><input type="number" id="f_coreOd" placeholder="e.g. 9" step="0.1" oninput="calculateFlat()"></div>
-                            <div class="input-group"><label>Cover Turns</label><input type="number" id="f_covTurns" placeholder="e.g. 10" step="1" oninput="calculateFlat()"></div>
-                            <div class="input-group full"><label>Weight of Core (g)</label><input type="number" id="f_coreWt" placeholder="e.g. 1" step="0.1" oninput="calculateFlat()"></div>
-                            <div class="input-group full"><label>Target Can Dia (mm) — optional</label><input type="number" id="f_canDia" placeholder="e.g. 30" step="0.1" oninput="calculateFlat()"></div>
-                            <div class="input-group full"><label>Fit Clearance (mm)</label><input type="number" id="f_clearance" placeholder="e.g. 6" step="0.1" oninput="calculateFlat()"></div>
+                            <div class="input-group"><label>Thickness (µm)</label><input type="number" id="f_thick" value="5.9" step="0.1" oninput="calculateFlat()"></div>
+                            <div class="input-group"><label>Width (mm)</label><input type="number" id="f_width" value="37.5" step="0.1" oninput="calculateFlat()"></div>
+                            <div class="input-group"><label>Free Margin (mm)</label><input type="number" id="f_margin" value="1.5" step="0.1" oninput="calculateFlat()"></div>
+                            <div class="input-group"><label>Offset (mm)</label><input type="number" id="f_offset" value="1" step="0.1" oninput="calculateFlat()"></div>
+                            <div class="input-group"><label>Core OD (mm)</label><input type="number" id="f_coreOd" value="9" step="0.1" oninput="calculateFlat()"></div>
+                            <div class="input-group"><label>Cover Turns</label><input type="number" id="f_covTurns" value="10" step="1" oninput="calculateFlat()"></div>
+                            <div class="input-group full"><label>Weight of Core (g)</label><input type="number" id="f_coreWt" value="1" step="0.1" oninput="calculateFlat()"></div>
+                            <div class="input-group full"><label>Target Can Dia (mm) — optional</label><input type="number" id="f_canDia" value="30" step="0.1" oninput="calculateFlat()"></div>
+                            <div class="input-group full"><label>Fit Clearance (mm)</label><input type="number" id="f_clearance" value="6" step="0.1" oninput="calculateFlat()"></div>
                         </div>
                         <div class="btn-row">
                             <button class="btn btn-flat btn-force" data-req="f_mfd f_thick f_width f_margin f_offset f_coreOd f_covTurns f_coreWt" data-tab="f" onclick="calculateFlat()">Force Calc</button>
                             <button class="btn btn-outline" onclick="printTicket('f')">🖨️ Print Ticket</button>
+                            <button class="btn btn-outline" onclick="shareTicket('f')">📤 Share</button>
                         </div>
 
                         <div class="results" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
@@ -687,8 +707,8 @@
                                 <div class="results-header" style="color: var(--flat);">Element Physical Data</div>
                                 <div class="result-row"><span class="result-label">Length (m)</span><span class="result-val" id="f_res_length">0.000</span></div>
                                 <div class="result-row"><span class="result-label">Weight of Element (g)</span><span class="result-val" id="f_res_wtEle">0.000</span></div>
-                                <div class="result-row"><span class="result-label">Dia Incl Cover (mm)</span><span class="result-val" id="f_res_dia">0.000</span></div>
-                                <div class="result-row"><span class="result-label">No of Turns</span><span class="result-val" id="f_res_turns">0.000</span></div>
+                                <div class="result-row"><span class="result-label">Dia Incl Cover (mm)</span><span class="result-val flat-highlight" id="f_res_dia">0.000</span></div>
+                                <div class="result-row"><span class="result-label">No of Turns</span><span class="result-val flat-highlight" id="f_res_turns">0.000</span></div>
                                 <div class="result-row"><span class="result-label">SA / MFD</span><span class="result-val" id="f_res_sa">0.000</span></div>
                                 <div class="result-row" style="border-top: 2px solid var(--border); padding-top: 12px; margin-top: 6px;">
                                     <span class="result-label" style="font-weight:800; color:var(--text)">Total Element Wt.</span><span class="result-val flat-highlight" style="font-size:20px" id="f_res_totalWt">0.000</span>
@@ -1382,15 +1402,15 @@
             const tbody = document.getElementById('matrixBody');
             const tr = document.createElement('tr');
             tr.innerHTML = `
-                <td class="in-cell"><input type="number" class="in-val mat-mfd" placeholder="e.g. 5" step="0.1" oninput="calcMatrixRow(this)"></td>
-                <td class="in-cell"><input type="number" class="in-val mat-tol" placeholder="e.g. 0" step="0.1" oninput="calcMatrixRow(this)"></td>
-                <td class="in-cell"><input type="number" class="in-val mat-thick" placeholder="e.g. 6" step="0.1" oninput="calcMatrixRow(this)"></td>
-                <td class="in-cell"><input type="number" class="in-val mat-width" placeholder="e.g. 30" step="0.1" oninput="calcMatrixRow(this)"></td>
-                <td class="in-cell"><input type="number" class="in-val mat-margin" placeholder="e.g. 1.5" step="0.1" oninput="calcMatrixRow(this)"></td>
-                <td class="in-cell"><input type="number" class="in-val mat-offset" placeholder="e.g. 1" step="0.1" oninput="calcMatrixRow(this)"></td>
-                <td class="in-cell"><input type="number" class="in-val mat-coreOd" placeholder="e.g. 9" step="0.1" oninput="calcMatrixRow(this)"></td>
-                <td class="in-cell"><input type="number" class="in-val mat-coreWt" placeholder="e.g. 0.8" step="0.1" oninput="calcMatrixRow(this)"></td>
-                <td class="in-cell"><input type="number" class="in-val mat-covTurns" placeholder="e.g. 10" step="1" oninput="calcMatrixRow(this)"></td>
+                <td class="in-cell"><input type="number" class="in-val mat-mfd" value="5" step="0.1" oninput="calcMatrixRow(this)"></td>
+                <td class="in-cell"><input type="number" class="in-val mat-tol" value="0" step="0.1" oninput="calcMatrixRow(this)"></td>
+                <td class="in-cell"><input type="number" class="in-val mat-thick" value="6" step="0.1" oninput="calcMatrixRow(this)"></td>
+                <td class="in-cell"><input type="number" class="in-val mat-width" value="30" step="0.1" oninput="calcMatrixRow(this)"></td>
+                <td class="in-cell"><input type="number" class="in-val mat-margin" value="1.5" step="0.1" oninput="calcMatrixRow(this)"></td>
+                <td class="in-cell"><input type="number" class="in-val mat-offset" value="1" step="0.1" oninput="calcMatrixRow(this)"></td>
+                <td class="in-cell"><input type="number" class="in-val mat-coreOd" value="9" step="0.1" oninput="calcMatrixRow(this)"></td>
+                <td class="in-cell"><input type="number" class="in-val mat-coreWt" value="0.8" step="0.1" oninput="calcMatrixRow(this)"></td>
+                <td class="in-cell"><input type="number" class="in-val mat-covTurns" value="10" step="1" oninput="calcMatrixRow(this)"></td>
                 
                 <td class="out-cell"><input type="text" class="out-val mat-finMfd" readonly></td>
                 <td class="out-cell"><input type="text" class="out-val mat-len" readonly></td>
@@ -1490,8 +1510,8 @@
             </svg>`;
         }
 
-        function printTicket(type) {
-            if (TAB_FIELD_MAP[type]) snapshotHistory(type); // printing a ticket is a strong "final result" signal
+        function buildTicketHTML(type) {
+            if (TAB_FIELD_MAP[type]) snapshotHistory(type); // printing/sharing a ticket is a strong "final result" signal
             let html = '<div style="max-width: 800px; margin: 0 auto; font-family: \'Inter\', sans-serif;">';
 
             const ticketId = 'CH-' + new Date().toISOString().slice(0,10).replace(/-/g,'') + '-' + Math.random().toString(36).slice(2,6).toUpperCase();
@@ -1537,7 +1557,7 @@
                         ptRow('Length (m)', txt('m1_res_length')) +
                         ptRow('Weight of Element (g)', txt('m1_res_wtEle')) +
                         ptRow('Dia Incl Cover Film (mm)', txt('m1_res_dia'), true) +
-                        ptRow('No of Turns', txt('m1_res_turns')) +
+                        ptRow('No of Turns', txt('m1_res_turns'), true) +
                         ptRow('Cover Film Weight (g)', txt('m1_res_covWt')) +
                         ptRow('SA / MFD', txt('m1_res_sa')) +
                         ptRow('Weight of Core (g)', txt('m1_res_coreWt')) +
@@ -1615,7 +1635,7 @@
                     ptSec('Winding — Final Data', 'pt-final-hdr',
                         ptRow('Length (m)', txt('m2_res_len')) +
                         ptRow('Dia Incl Cover Film (mm)', txt('m2_res_dia'), true) +
-                        ptRow('No of Turns', txt('m2_res_turns')) +
+                        ptRow('No of Turns', txt('m2_res_turns'), true) +
                         ptRow('SA / MFD', txt('m2_res_sa')) +
                         ptRow('Element Wt (g)', txt('m2_res_wtEle')) +
                         ptRow('Cover Film Wt (g)', txt('m2_res_covWt')) +
@@ -1643,13 +1663,13 @@
                     ptSec('Stage Dimensions (In / Out) — Final Data', 'pt-output-hdr',
                         ptRow('Lengths L1 / L2 (m)', txt('m3_res_lens')) +
                         ptRow('Ele Dia D1 / D2 (mm)', txt('m3_res_dias'), true) +
-                        ptRow('Turns N1 / N2', txt('m3_res_turns')) +
+                        ptRow('Turns N1 / N2', txt('m3_res_turns'), true) +
                         ptRow('Weights W1 / W2 (g)', txt('m3_res_wts'))
                     )
                 );
                 html += ptSec('Final Assembly — Final Data', 'pt-final-hdr',
                     ptRow('Outer Cover Wt (g, est.)', txt('m3_res_covWt')) +
-                    ptRow('Total Turns', txt('m3_res_totTurns')) +
+                    ptRow('Total Turns', txt('m3_res_totTurns'), true) +
                     ptRow('Final Dia Incl. Cover (mm)', txt('m3_res_totDia'), true) +
                     ptRow('Total Element Wt. (g)', txt('m3_res_totWt'), true)
                 );
@@ -1672,12 +1692,12 @@
                     ptSec('Stage Dimensions (In / Mid / Out) — Final Data', 'pt-output-hdr',
                         ptRow('Lengths (m)', txt('m4_res_lens')) +
                         ptRow('Dias (mm)', txt('m4_res_dias'), true) +
-                        ptRow('Turns', txt('m4_res_turns')) +
+                        ptRow('Turns', txt('m4_res_turns'), true) +
                         ptRow('Weights (g)', txt('m4_res_wts'))
                     )
                 );
                 html += ptSec('Final Assembly — Final Data', 'pt-final-hdr',
-                    ptRow('Total Turns', txt('m4_res_totTurns')) +
+                    ptRow('Total Turns', txt('m4_res_totTurns'), true) +
                     ptRow('Final Dia Incl. Cover (mm)', txt('m4_res_totDia'), true) +
                     ptRow('Total Element Wt. (g)', txt('m4_res_totWt'), true)
                 );
@@ -1719,11 +1739,11 @@
                     ptSec('Stage Dimensions (In / Mid / Out) — Final Data', 'pt-output-hdr',
                         ptRow('Lengths (m)', txt('m5_res_lens')) +
                         ptRow('Dias (mm)', txt('m5_res_dias'), true) +
-                        ptRow('Turns', txt('m5_res_turns'))
+                        ptRow('Turns', txt('m5_res_turns'), true)
                     )
                 );
                 html += ptSec('Final Assembly — Final Data', 'pt-final-hdr',
-                    ptRow('Total Turns', txt('m5_res_totTurns')) +
+                    ptRow('Total Turns', txt('m5_res_totTurns'), true) +
                     ptRow('Final Dia Incl. Cover (mm)', txt('m5_res_totDia'), true) +
                     ptRow('Total Element Wt. (g)', txt('m5_res_totWt'), true)
                 );
@@ -1745,8 +1765,8 @@
                     ptSec('Element Physical Data — Final Data', 'pt-output-hdr',
                         ptRow('Length (m)', txt('f_res_length')) +
                         ptRow('Weight of Element (g)', txt('f_res_wtEle')) +
-                        ptRow('Dia Incl Cover Film (mm)', txt('f_res_dia')) +
-                        ptRow('No of Turns', txt('f_res_turns')) +
+                        ptRow('Dia Incl Cover Film (mm)', txt('f_res_dia'), true) +
+                        ptRow('No of Turns', txt('f_res_turns'), true) +
                         ptRow('SA / MFD', txt('f_res_sa')) +
                         ptRow('Total Element Wt. (g)', txt('f_res_totalWt'), true) +
                         ptRow('Fits Can Ø' + val('f_canDia') + 'mm (+' + val('f_clearance') + 'mm)?', txt('f_res_canFit'), true)
@@ -1774,8 +1794,86 @@
             <div class="pt-footer-note">Generated by CapHub &middot; Ticket ${ticketId} &middot; Figures derived from the verified CapHub calculation engine &middot; Cross-check against Cap_Formula.xlsx for critical builds</div>`;
 
             html += '</div>';
-            document.getElementById('print-area').innerHTML = html;
-            window.print();
+            return { html, ticketId };
+        }
+
+        function printTicket(type) {
+            const { html } = buildTicketHTML(type);
+            const area = document.getElementById('print-area');
+            area.classList.remove('share-capture'); // defensive: clear any leftover off-screen positioning from a prior Share
+            area.innerHTML = html;
+            // A short delay lets the browser actually lay out/paint the freshly-injected content
+            // (and start loading the letterhead logo) before the print dialog captures the page -
+            // calling print() synchronously right after an innerHTML swap can produce a blank
+            // first paint in some browsers.
+            setTimeout(() => window.print(), 80);
+        }
+
+        function downloadBlob(blob, filename) {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url; a.download = filename;
+            document.body.appendChild(a); a.click(); document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // --- SHARE AS PDF ---
+        // Renders the same ticket markup used for printing into an off-screen element, rasterizes
+        // it with html2canvas, wraps that in a single-page PDF via jsPDF, then hands it to the
+        // native Web Share sheet (WhatsApp, Mail, AirDrop, etc.) when the platform supports sharing
+        // files. Falls back to a plain download on desktop browsers that don't support file sharing.
+        async function shareTicket(type) {
+            const btn = event ? event.currentTarget : null;
+            const originalLabel = btn ? btn.innerHTML : null;
+            if (btn) { btn.innerHTML = '⏳ Preparing...'; btn.disabled = true; }
+
+            try {
+                if (typeof html2canvas === 'undefined' || typeof window.jspdf === 'undefined') {
+                    alert('PDF sharing library failed to load - check your internet connection and try again.');
+                    return;
+                }
+
+                const { html, ticketId } = buildTicketHTML(type);
+                const area = document.getElementById('print-area');
+                area.innerHTML = html;
+                area.classList.add('share-capture');
+
+                // Let the browser actually lay out the off-screen content before capturing it
+                await new Promise(r => setTimeout(r, 50));
+
+                const canvas = await html2canvas(area, { scale: 2, backgroundColor: '#ffffff', useCORS: true });
+                area.classList.remove('share-capture');
+
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF({ unit: 'mm', format: 'a4' });
+                const pageW = 210, pageH = 297;
+                const ratio = canvas.height / canvas.width;
+                let renderW = pageW, renderH = pageW * ratio;
+                if (renderH > pageH) { renderH = pageH; renderW = pageH / ratio; }
+                pdf.addImage(canvas.toDataURL('image/png'), 'PNG', (pageW - renderW) / 2, 0, renderW, renderH);
+
+                const blob = pdf.output('blob');
+                const filename = `CapHub_${type}_${ticketId}.pdf`;
+                const file = new File([blob], filename, { type: 'application/pdf' });
+
+                if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                    await navigator.share({ files: [file], title: 'CapHub Production Ticket', text: `CapHub ticket ${ticketId}` });
+                } else if (navigator.share) {
+                    // Platform supports sharing but not files - share text, and still hand over the PDF via download
+                    downloadBlob(blob, filename);
+                    await navigator.share({ title: 'CapHub Production Ticket', text: `CapHub ticket ${ticketId} - PDF downloaded, attach it manually.` });
+                } else {
+                    downloadBlob(blob, filename);
+                }
+            } catch (err) {
+                if (err && err.name !== 'AbortError') { // AbortError = person cancelled the share sheet, not a real error
+                    console.error('Share failed:', err);
+                    alert('Could not prepare the PDF for sharing. Try Print Ticket instead.');
+                }
+            } finally {
+                document.getElementById('print-area').classList.remove('share-capture');
+                if (btn) { btn.innerHTML = originalLabel; btn.disabled = false; }
+            }
         }
 
         // --- PRODUCT LIBRARY ---
@@ -1859,6 +1957,7 @@
 
             if (!outerDia || outerDia <= 0 || isNaN(outerDia)) {
                 svg.innerHTML = `<text x="160" y="120" text-anchor="middle" fill="var(--dim)" font-family="var(--font-main)" font-size="12">Enter winding parameters to preview</text>`;
+                document.getElementById('wd-dia').innerText = '—';
                 document.getElementById('wd-turns').innerText = '—';
                 document.getElementById('wd-length').innerText = '—';
                 document.getElementById('wd-weight').innerText = '—';
@@ -1892,6 +1991,7 @@
                 <text x="${cx}" y="${dimY + 20}" text-anchor="middle" style="fill:var(--text);font-family:var(--font-mono)" font-size="13" font-weight="700">Ø${outerDia.toFixed(2)} mm</text>
             `;
 
+            document.getElementById('wd-dia').innerText = outerDia.toFixed(2);
             document.getElementById('wd-turns').innerText = Math.round(res.noOfTurns).toLocaleString();
             document.getElementById('wd-length').innerText = res.length_m.toFixed(2);
             document.getElementById('wd-weight').innerText = res.weightElement.toFixed(2);
