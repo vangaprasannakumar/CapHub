@@ -291,7 +291,7 @@
 
         @media print {
             @page { size: A4 portrait; margin: 10mm 11mm; }
-            html, body { height: auto !important; }
+            html, body { height: auto !important; width: auto !important; min-height: 0 !important; overflow: visible !important; display: block !important; background: #ffffff !important; }
             /* display:none actually removes these from layout (zero height), unlike
                visibility:hidden which leaves their full height in the document flow - that
                leftover height was what caused extra blank pages after the ticket content. */
