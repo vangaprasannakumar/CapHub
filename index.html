@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Capacitor Production Hub</title>
-    <meta name="theme-color" content="#14130F">
+    <meta name="theme-color" content="#f6f1e7">
     <link rel="manifest" href="manifest.json">
-    <link rel="icon" type="image/png" href="https://i.postimg.cc/7ZqG3fCq/Cap-Formula.png">
+    <link rel="icon" type="image/svg+xml" href="https://i.postimg.cc/7ZqG3fCq/Cap-Formula.png">
     <link rel="apple-touch-icon" href="https://i.postimg.cc/7ZqG3fCq/Cap-Formula.png">
     
     <!-- Space Grotesk (display) / Inter (body) / JetBrains Mono (numeric readouts) -->
@@ -60,7 +60,7 @@
         /* HEADER */
         .hdr { display: flex; justify-content: space-between; align-items: center; padding: 0 24px; border-bottom: 1px solid var(--border); background: var(--surface); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); height: var(--hdr-h); flex-shrink: 0; flex-wrap: nowrap; z-index: 100; }
         .hdr-l { display: flex; align-items: center; gap: 12px; min-width: 0; overflow: hidden; }
-        .hdr-l img { width: 36px; height: 36px; border-radius: 10px; box-shadow: 0 0 15px var(--accent-bg); flex-shrink: 0; }
+        .hdr-l .hdr-logo { width: 36px; height: 36px; border-radius: 10px; box-shadow: 0 0 15px var(--accent-bg); flex-shrink: 0; }
         .hdr-l h1 { font-family: var(--font-head); font-size: 20px; font-weight: 800; letter-spacing: -0.5px; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .hdr-l p { font-size: 12px; color: var(--muted); font-weight: 500; display: none; white-space: nowrap; }
         @media (min-width: 600px) { .hdr-l p { display: block; margin-left: 8px; padding-left: 12px; border-left: 1px solid var(--border); } }
@@ -216,8 +216,8 @@
         input.invalid { border-color: var(--danger) !important; box-shadow: 0 0 0 3px rgba(239,68,68,0.15) !important; }
 
         /* DIAGNOSTICS / SELF-TEST MODAL */
-        #diag-overlay, #hist-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index: 2000; align-items: center; justify-content: center; padding: 20px; }
-        #diag-overlay.on, #hist-overlay.on { display: flex; animation: overlayIn 0.2s var(--ease); }
+        #diag-overlay, #hist-overlay, #lock-settings-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index: 2000; align-items: center; justify-content: center; padding: 20px; }
+        #diag-overlay.on, #hist-overlay.on, #lock-settings-overlay.on { display: flex; animation: overlayIn 0.2s var(--ease); }
         @keyframes overlayIn { from { opacity: 0; } to { opacity: 1; } }
         .diag-modal { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; max-width: 720px; width: 100%; max-height: 85vh; display: flex; flex-direction: column; box-shadow: var(--shadow); animation: modalIn 0.25s var(--spring); }
         @keyframes modalIn { from { opacity: 0; transform: scale(0.96) translateY(8px); } to { opacity: 1; transform: scale(1) translateY(0); } }
@@ -233,6 +233,31 @@
         .diag-badge.pass { background: rgba(94,184,138,0.15); color: var(--success); }
         .diag-badge.fail { background: rgba(217,85,62,0.15); color: var(--danger); }
         .diag-footer { padding: 16px 24px; border-top: 1px solid var(--border); text-align: right; }
+
+        /* APP LOCK */
+        #lock-screen { display: none; position: fixed; inset: 0; z-index: 5000; background: var(--bg); align-items: center; justify-content: center; flex-direction: column; padding: 24px; }
+        #lock-screen.on { display: flex; }
+        .lock-logo { width: 64px; height: 64px; border-radius: 16px; box-shadow: 0 0 30px var(--accent-bg); margin-bottom: 20px; }
+        .lock-title { font-family: var(--font-head); font-size: 20px; font-weight: 800; color: var(--text); margin-bottom: 4px; }
+        .lock-sub { font-size: 13px; color: var(--muted); margin-bottom: 28px; text-align: center; max-width: 280px; }
+        .lock-dots { display: flex; gap: 16px; margin-bottom: 32px; }
+        .lock-dot { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--border); transition: all 0.15s var(--spring); }
+        .lock-dot.filled { background: var(--accent); border-color: var(--accent); transform: scale(1.1); }
+        .lock-dots.shake { animation: lockShake 0.4s; }
+        @keyframes lockShake { 0%,100%{transform:translateX(0);} 20%,60%{transform:translateX(-10px);} 40%,80%{transform:translateX(10px);} }
+        .lock-error { font-size: 12.5px; color: var(--danger); font-weight: 600; margin-bottom: 12px; height: 16px; }
+        .lock-keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; max-width: 260px; width: 100%; }
+        .lock-key { aspect-ratio: 1; border-radius: 50%; border: 1px solid var(--border); background: var(--surface); color: var(--text); font-family: var(--font-mono); font-size: 22px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: transform 0.12s var(--spring), background 0.15s var(--ease); }
+        .lock-key:active { transform: scale(0.92); background: var(--accent-bg); }
+        .lock-key.lock-key-ghost { visibility: hidden; }
+        .lock-forgot { margin-top: 24px; font-size: 12.5px; color: var(--muted); text-decoration: underline; cursor: pointer; background: none; border: none; font-family: var(--font-main); }
+        .lock-forgot:hover { color: var(--accent); }
+
+        .lock-settings-row { display: flex; justify-content: space-between; align-items: center; padding: 14px 0; border-bottom: 1px solid var(--border); }
+        .lock-settings-row:last-child { border-bottom: none; }
+        .lock-status-badge { font-size: 11px; font-weight: 800; padding: 4px 10px; border-radius: 20px; letter-spacing: .5px; }
+        .lock-status-badge.off { background: var(--input-bg); color: var(--muted); }
+        .lock-status-badge.on { background: rgba(94,184,138,0.15); color: var(--success); }
 
         /* UPDATE TOAST */
         #update-toast { display: none; position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom)); transform: translateX(-50%) translateY(20px); background: var(--surface); border: 1px solid var(--accent); border-radius: 14px; padding: 14px 18px; align-items: center; gap: 16px; box-shadow: var(--shadow); z-index: 3000; opacity: 0; transition: all 0.3s var(--spring); backdrop-filter: blur(16px); max-width: 92vw; }
@@ -251,7 +276,6 @@
 
         .pt-letterhead { display: flex; justify-content: space-between; align-items: center; border-bottom: 2.5px solid #b8752f; padding-bottom: 8px; margin-bottom: 2px; }
         .pt-brand { display: flex; align-items: center; gap: 8px; }
-        .pt-brand img { width: 30px; height: 30px; border-radius: 6px; }
         .pt-brand-name { font-size: 15px; font-weight: 800; letter-spacing: -0.3px; line-height: 1.1; }
         .pt-brand-tag { font-size: 8.5px; color: #6b6255; text-transform: uppercase; letter-spacing: .8px; }
         .pt-idbox { text-align: right; font-size: 9px; color: #443c30; line-height: 1.4; }
@@ -295,7 +319,7 @@
             /* display:none actually removes these from layout (zero height), unlike
                visibility:hidden which leaves their full height in the document flow - that
                leftover height was what caused extra blank pages after the ticket content. */
-            .hdr, .app-body, #bnav, #diag-overlay, #hist-overlay, #update-toast { display: none !important; }
+            .hdr, .app-body, #bnav, #diag-overlay, #hist-overlay, #update-toast, #lock-screen, #lock-settings-overlay { display: none !important; }
             #print-area { display: block !important; position: static !important; left: auto !important; top: auto !important; z-index: auto !important; }
             .pt-table th, .pt-section, .pt-diagram-panel, .pt-table td.pt-hl { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         }
@@ -306,7 +330,7 @@
     <!-- HEADER -->
     <div class="hdr">
         <div class="hdr-l">
-            <img src="https://i.postimg.cc/7ZqG3fCq/Cap-Formula.png" alt="Logo">
+            <svg class="hdr-logo" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg"><rect width="32" height="32" rx="7" fill="#14130f"/><circle cx="16" cy="16" r="11" fill="#5b4a35"/><circle cx="16" cy="16" r="8.5" fill="#d68a3c"/><circle cx="16" cy="16" r="4" fill="#14130f" stroke="#f2ecdd" stroke-width="1.2"/></svg>
             <div>
                 <h1 id="appTitle">Cap Formula</h1>
                 <p id="appSubtitle">Winding & Potting Calculator</p>
@@ -318,6 +342,9 @@
             </button>
             <button class="icon-btn" onclick="openDiagnostics()" title="Engine Self-Test">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+            </button>
+            <button class="icon-btn" onclick="openLockSettings()" title="App Lock" id="lock-settings-btn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
             </button>
             <button class="icon-btn" onclick="toggleTheme()" title="Toggle Theme" id="theme-toggle">
                 <svg id="moon-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
@@ -368,7 +395,7 @@
                     <div class="card">
                         <div class="card-title">Winding Parameters</div>
                         <div class="input-grid">
-                            <div class="input-group"><label>Target MFD</label><input type="number" id="m1_mfd" value="2" step="0.1" oninput="calculateM1()"></div>
+                            <div class="input-group"><label>Target MFD</label><input type="number" id="m1_mfd" value="5" step="0.1" oninput="calculateM1()"></div>
                             <div class="input-group"><label>Pos Tol %</label><input type="number" id="m1_posTol" value="0" step="0.1" oninput="calculateM1()"></div>
                             <div class="input-group full"><label>Fin. MFD</label><input type="number" id="m1_finMfd" value="" readonly class="readonly-field"></div>
                             <div class="input-group"><label>Thickness (µm)</label><input type="number" id="m1_thick" value="6" step="0.1" oninput="calculateM1()"></div>
@@ -858,6 +885,62 @@
         </div>
     </div>
 
+    <!-- APP LOCK SETTINGS MODAL -->
+    <div id="lock-settings-overlay" onclick="if(event.target===this) closeLockSettings()">
+        <div class="diag-modal" style="max-width: 420px;">
+            <div class="diag-head">
+                <div><h3>App Lock</h3></div>
+                <button class="icon-btn" onclick="closeLockSettings()" title="Close">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+            <div class="diag-body">
+                <div class="lock-settings-row">
+                    <span style="color:var(--text); font-weight:600; font-size:14px;">Status</span>
+                    <span class="lock-status-badge off" id="lock-status-badge">OFF</span>
+                </div>
+                <div class="lock-settings-row">
+                    <span style="color:var(--text); font-weight:600; font-size:14px;">Sync</span>
+                    <span style="color:var(--muted); font-size:12.5px;" id="lock-sync-status">Never synced yet</span>
+                </div>
+                <p style="font-size:12.5px; color:var(--muted); line-height:1.5; margin:14px 0;">
+                    The PIN is controlled centrally - it's set in a Google Sheet, not on this device.
+                    This device checks in automatically on load and caches the result, so unlocking
+                    still works offline between syncs.
+                </p>
+                <div style="display:flex; flex-direction:column; gap:10px;">
+                    <button class="btn btn-primary" style="margin-bottom:0;" id="lock-sync-btn" onclick="manualSyncPin()">Sync Now</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- FULL-SCREEN PIN LOCK / SETUP OVERLAY -->
+    <div id="lock-screen">
+        <svg class="lock-logo" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg"><rect width="32" height="32" rx="7" fill="#14130f"/><circle cx="16" cy="16" r="11" fill="#5b4a35"/><circle cx="16" cy="16" r="8.5" fill="#d68a3c"/><circle cx="16" cy="16" r="4" fill="#14130f" stroke="#f2ecdd" stroke-width="1.2"/></svg>
+        <div class="lock-title" id="lock-title">Enter PIN</div>
+        <div class="lock-sub" id="lock-sub">CapHub is locked</div>
+        <div class="lock-error" id="lock-error"></div>
+        <div class="lock-dots" id="lock-dots">
+            <div class="lock-dot"></div><div class="lock-dot"></div><div class="lock-dot"></div><div class="lock-dot"></div>
+        </div>
+        <div class="lock-keypad">
+            <button class="lock-key" onclick="lockKeyPress('1')">1</button>
+            <button class="lock-key" onclick="lockKeyPress('2')">2</button>
+            <button class="lock-key" onclick="lockKeyPress('3')">3</button>
+            <button class="lock-key" onclick="lockKeyPress('4')">4</button>
+            <button class="lock-key" onclick="lockKeyPress('5')">5</button>
+            <button class="lock-key" onclick="lockKeyPress('6')">6</button>
+            <button class="lock-key" onclick="lockKeyPress('7')">7</button>
+            <button class="lock-key" onclick="lockKeyPress('8')">8</button>
+            <button class="lock-key" onclick="lockKeyPress('9')">9</button>
+            <button class="lock-key lock-key-ghost" tabindex="-1">0</button>
+            <button class="lock-key" onclick="lockKeyPress('0')">0</button>
+            <button class="lock-key" onclick="lockKeyPress('back')" title="Backspace">⌫</button>
+        </div>
+        <button class="lock-forgot" id="lock-forgot-btn" onclick="forgotPin()">Forgot PIN?</button>
+    </div>
+
     <!-- UPDATE AVAILABLE TOAST -->
     <div id="update-toast">
         <span>A new version of CapHub is available.</span>
@@ -884,7 +967,7 @@
         }
 
         function initTheme() {
-            const saved = localStorage.getItem('caphub_theme') || 'dark';
+            const saved = localStorage.getItem('caphub_theme') || 'light';
             document.documentElement.setAttribute('data-theme', saved);
             document.getElementById('moon-icon').style.display = saved === 'dark' ? 'block' : 'none';
             document.getElementById('sun-icon').style.display = saved === 'light' ? 'block' : 'none';
@@ -1517,7 +1600,7 @@
             const ticketId = 'CH-' + new Date().toISOString().slice(0,10).replace(/-/g,'') + '-' + Math.random().toString(36).slice(2,6).toUpperCase();
             html += `<div class="pt-letterhead">
                 <div class="pt-brand">
-                    <img src="https://i.postimg.cc/7ZqG3fCq/Cap-Formula.png" alt="Logo">
+                    <svg width="30" height="30" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg"><rect width="32" height="32" rx="7" fill="#14130f"/><circle cx="16" cy="16" r="11" fill="#5b4a35"/><circle cx="16" cy="16" r="8.5" fill="#d68a3c"/><circle cx="16" cy="16" r="4" fill="#14130f" stroke="#f2ecdd" stroke-width="1.2"/></svg>
                     <div><div class="pt-brand-name">CapHub</div><div class="pt-brand-tag">Precision Winding &amp; Potting</div></div>
                 </div>
                 <div class="pt-idbox">
@@ -1805,7 +1888,6 @@
             body { margin: 0; font-family: Arial, Helvetica, sans-serif; background: #ffffff; color: #1a1410; font-size: 11px; line-height: 1.25; }
             .pt-letterhead { display: flex; justify-content: space-between; align-items: center; border-bottom: 2.5px solid #b8752f; padding-bottom: 8px; margin-bottom: 2px; }
             .pt-brand { display: flex; align-items: center; gap: 8px; }
-            .pt-brand img { width: 30px; height: 30px; border-radius: 6px; }
             .pt-brand-name { font-size: 15px; font-weight: 800; letter-spacing: -0.3px; line-height: 1.1; }
             .pt-brand-tag { font-size: 8.5px; color: #6b6255; text-transform: uppercase; letter-spacing: .8px; }
             .pt-idbox { text-align: right; font-size: 9px; color: #443c30; line-height: 1.4; }
@@ -2236,6 +2318,156 @@
             }
         }
 
+        // --- APP LOCK ---
+        // Fully client-side gate - protects against casual access (someone picking up the device,
+        // or the public link), NOT a real security boundary.
+        //
+        // PIN is centrally controlled via a Google Sheet + Apps Script backend (see Code.gs) -
+        // the app fetches only a SHA-256 hash of the current PIN on load (never the plaintext),
+        // caches it locally, and verifies entries against that cache. This means unlocking still
+        // works offline using the last-synced hash, while the Sheet remains the single source of
+        // truth whenever the device is online. There is deliberately no local "turn off" control -
+        // anyone could otherwise defeat centralized protection from any unlocked device.
+        const GAS_PIN_API_URL = 'https://script.google.com/macros/s/AKfycbw6KUwkjMddH34MUpyufITypSvqv1LpoK7dZWn53cBzxse7ypT-8hw_pApVfJLPUEAzoQ/exec';
+
+        let lockBuffer = '';
+
+        async function hashPin(pin) {
+            const salted = 'caphub_salt_v1_' + pin; // MUST match PIN_SALT in Code.gs exactly
+            if (window.crypto && window.crypto.subtle) {
+                try {
+                    const buf = await window.crypto.subtle.digest('SHA-256', new TextEncoder().encode(salted));
+                    return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+                } catch (e) { /* fall through to the non-crypto fallback below */ }
+            }
+            // Fallback for non-secure contexts (e.g. local file:// testing, where SubtleCrypto is
+            // unavailable) - not cryptographically strong, just avoids storing the raw PIN.
+            let hash = 0;
+            for (let i = 0; i < salted.length; i++) { hash = ((hash << 5) - hash + salted.charCodeAt(i)) | 0; }
+            return 'fb_' + Math.abs(hash).toString(16);
+        }
+
+        // Pulls the current PIN hash from the Sheet-backed API and caches it locally. Fails
+        // silently and keeps whatever's cached if offline or the endpoint is unreachable -
+        // never blocks app usage on a network call.
+        async function syncPinFromRemote() {
+            if (!GAS_PIN_API_URL || GAS_PIN_API_URL.includes('PASTE_')) return false;
+            try {
+                const controller = new AbortController();
+                const timeout = setTimeout(() => controller.abort(), 6000);
+                const res = await fetch(GAS_PIN_API_URL, { signal: controller.signal });
+                clearTimeout(timeout);
+                if (!res.ok) return false;
+                const data = await res.json();
+                if (data.hash) {
+                    localStorage.setItem('caphub_pin_hash', data.hash);
+                } else {
+                    localStorage.removeItem('caphub_pin_hash'); // Sheet cell blank/invalid = lock off
+                }
+                localStorage.setItem('caphub_pin_synced_at', Date.now().toString());
+                return true;
+            } catch (e) {
+                return false; // offline, timed out, or CORS/deploy issue - keep the last-cached hash
+            }
+        }
+
+        function updateLockDots() {
+            document.querySelectorAll('#lock-dots .lock-dot').forEach((dot, i) => {
+                dot.classList.toggle('filled', i < lockBuffer.length);
+            });
+        }
+
+        function showLockError(msg) {
+            const el = document.getElementById('lock-error');
+            el.innerText = msg;
+            const dots = document.getElementById('lock-dots');
+            dots.classList.remove('shake'); void dots.offsetWidth; dots.classList.add('shake');
+            setTimeout(() => { if (el.innerText === msg) el.innerText = ''; }, 1800);
+        }
+
+        function showLockScreen() {
+            lockBuffer = '';
+            updateLockDots();
+            document.getElementById('lock-title').innerText = 'Enter PIN';
+            document.getElementById('lock-sub').innerText = 'CapHub is locked';
+            document.getElementById('lock-error').innerText = '';
+            document.getElementById('lock-screen').classList.add('on');
+        }
+
+        async function lockKeyPress(key) {
+            if (key === 'back') {
+                lockBuffer = lockBuffer.slice(0, -1);
+                updateLockDots();
+                return;
+            }
+            if (lockBuffer.length >= 4) return;
+            lockBuffer += key;
+            updateLockDots();
+            if (lockBuffer.length < 4) return;
+
+            const entered = lockBuffer;
+            const hash = await hashPin(entered);
+            if (hash === localStorage.getItem('caphub_pin_hash')) {
+                sessionStorage.setItem('caphub_unlocked', '1');
+                document.getElementById('lock-screen').classList.remove('on');
+            } else {
+                lockBuffer = ''; updateLockDots();
+                showLockError('Incorrect PIN');
+            }
+        }
+
+        function forgotPin() {
+            if (!confirm('This unlocks CapHub for now, but it will re-sync and re-lock automatically ' +
+                          'next time this device is online - the PIN is controlled centrally and this ' +
+                          "isn't a permanent bypass. Continue?")) return;
+            sessionStorage.setItem('caphub_unlocked', '1');
+            document.getElementById('lock-screen').classList.remove('on');
+        }
+
+        function relativeSyncTime() {
+            const ts = parseInt(localStorage.getItem('caphub_pin_synced_at') || '0', 10);
+            if (!ts) return 'Never synced yet';
+            const mins = Math.round((Date.now() - ts) / 60000);
+            if (mins < 1) return 'Synced just now';
+            if (mins < 60) return `Synced ${mins}m ago`;
+            const hrs = Math.round(mins / 60);
+            if (hrs < 24) return `Synced ${hrs}h ago`;
+            return `Synced ${Math.round(hrs / 24)}d ago`;
+        }
+
+        function refreshLockSettingsView() {
+            const hasPin = !!localStorage.getItem('caphub_pin_hash');
+            const badge = document.getElementById('lock-status-badge');
+            badge.innerText = hasPin ? 'ON' : 'OFF';
+            badge.className = 'lock-status-badge ' + (hasPin ? 'on' : 'off');
+            document.getElementById('lock-sync-status').innerText = relativeSyncTime();
+        }
+
+        function openLockSettings() {
+            refreshLockSettingsView();
+            document.getElementById('lock-settings-overlay').classList.add('on');
+        }
+        function closeLockSettings() {
+            document.getElementById('lock-settings-overlay').classList.remove('on');
+        }
+
+        async function manualSyncPin() {
+            const btn = document.getElementById('lock-sync-btn');
+            const original = btn.innerText;
+            btn.innerText = 'Syncing...'; btn.disabled = true;
+            const ok = await syncPinFromRemote();
+            refreshLockSettingsView();
+            btn.innerText = ok ? 'Synced ✓' : 'Sync failed - offline?';
+            btn.disabled = false;
+            setTimeout(() => { btn.innerText = original; }, 2000);
+        }
+
+        function checkLockOnLoad() {
+            const hasPin = !!localStorage.getItem('caphub_pin_hash');
+            const unlocked = sessionStorage.getItem('caphub_unlocked') === '1';
+            if (hasPin && !unlocked) showLockScreen();
+        }
+
         // --- ENGINE SELF-TEST SUITE ---
         // Ground-truth values below were hand-verified against Cap_Formula.xlsx cached cell values
         // during the July 2026 formula audit. If any of these drift, a later edit broke something
@@ -2437,6 +2669,8 @@
 
         // --- INIT ALL ---
         window.onload = function() { 
+            checkLockOnLoad(); // immediate check using whatever's cached - fast, works offline
+            syncPinFromRemote().then(() => checkLockOnLoad()); // refresh from the Sheet in the background
             initTheme();
             updatePhaseLabels(); 
             calculateM1(); 
