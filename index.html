@@ -6,7 +6,7 @@
     <title>Capacitor Production Hub</title>
     <meta name="theme-color" content="#f6f1e7">
     <link rel="manifest" href="manifest.json">
-    <link rel="icon" type="image/svg+xml" href="https://i.postimg.cc/7ZqG3fCq/Cap-Formula.png">
+    <link rel="icon" type="image/png" href="https://i.postimg.cc/7ZqG3fCq/Cap-Formula.png">
     <link rel="apple-touch-icon" href="https://i.postimg.cc/7ZqG3fCq/Cap-Formula.png">
     
     <!-- Space Grotesk (display) / Inter (body) / JetBrains Mono (numeric readouts) -->
@@ -60,7 +60,7 @@
         /* HEADER */
         .hdr { display: flex; justify-content: space-between; align-items: center; padding: 0 24px; border-bottom: 1px solid var(--border); background: var(--surface); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); height: var(--hdr-h); flex-shrink: 0; flex-wrap: nowrap; z-index: 100; }
         .hdr-l { display: flex; align-items: center; gap: 12px; min-width: 0; overflow: hidden; }
-        .hdr-l .hdr-logo { width: 36px; height: 36px; border-radius: 10px; box-shadow: 0 0 15px var(--accent-bg); flex-shrink: 0; }
+        .hdr-l .hdr-logo { width: 36px; height: 36px; border-radius: 10px; box-shadow: 0 0 15px var(--accent-bg); flex-shrink: 0; object-fit: cover; }
         .hdr-l h1 { font-family: var(--font-head); font-size: 20px; font-weight: 800; letter-spacing: -0.5px; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .hdr-l p { font-size: 12px; color: var(--muted); font-weight: 500; display: none; white-space: nowrap; }
         @media (min-width: 600px) { .hdr-l p { display: block; margin-left: 8px; padding-left: 12px; border-left: 1px solid var(--border); } }
@@ -237,7 +237,7 @@
         /* APP LOCK */
         #lock-screen { display: none; position: fixed; inset: 0; z-index: 5000; background: var(--bg); align-items: center; justify-content: center; flex-direction: column; padding: 24px; }
         #lock-screen.on { display: flex; }
-        .lock-logo { width: 64px; height: 64px; border-radius: 16px; box-shadow: 0 0 30px var(--accent-bg); margin-bottom: 20px; }
+        .lock-logo { width: 64px; height: 64px; border-radius: 16px; box-shadow: 0 0 30px var(--accent-bg); margin-bottom: 20px; object-fit: cover; }
         .lock-title { font-family: var(--font-head); font-size: 20px; font-weight: 800; color: var(--text); margin-bottom: 4px; }
         .lock-sub { font-size: 13px; color: var(--muted); margin-bottom: 28px; text-align: center; max-width: 280px; }
         .lock-dots { display: flex; gap: 16px; margin-bottom: 32px; }
@@ -250,8 +250,8 @@
         .lock-key { aspect-ratio: 1; border-radius: 50%; border: 1px solid var(--border); background: var(--surface); color: var(--text); font-family: var(--font-mono); font-size: 22px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: transform 0.12s var(--spring), background 0.15s var(--ease); }
         .lock-key:active { transform: scale(0.92); background: var(--accent-bg); }
         .lock-key.lock-key-ghost { visibility: hidden; }
-        .lock-forgot { margin-top: 24px; font-size: 12.5px; color: var(--muted); text-decoration: underline; cursor: pointer; background: none; border: none; font-family: var(--font-main); }
-        .lock-forgot:hover { color: var(--accent); }
+        .lock-keypad.disabled { opacity: 0.3; pointer-events: none; filter: grayscale(0.6); }
+        .lock-sub.lockout { color: var(--danger); font-weight: 700; font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
 
         .lock-settings-row { display: flex; justify-content: space-between; align-items: center; padding: 14px 0; border-bottom: 1px solid var(--border); }
         .lock-settings-row:last-child { border-bottom: none; }
@@ -330,7 +330,7 @@
     <!-- HEADER -->
     <div class="hdr">
         <div class="hdr-l">
-            <svg class="hdr-logo" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg"><rect width="32" height="32" rx="7" fill="#14130f"/><circle cx="16" cy="16" r="11" fill="#5b4a35"/><circle cx="16" cy="16" r="8.5" fill="#d68a3c"/><circle cx="16" cy="16" r="4" fill="#14130f" stroke="#f2ecdd" stroke-width="1.2"/></svg>
+            <img class="hdr-logo" src="https://i.postimg.cc/7ZqG3fCq/Cap-Formula.png" alt="Logo" />
             <div>
                 <h1 id="appTitle">Cap Formula</h1>
                 <p id="appSubtitle">Winding & Potting Calculator</p>
@@ -917,14 +917,14 @@
 
     <!-- FULL-SCREEN PIN LOCK / SETUP OVERLAY -->
     <div id="lock-screen">
-        <svg class="lock-logo" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg"><rect width="32" height="32" rx="7" fill="#14130f"/><circle cx="16" cy="16" r="11" fill="#5b4a35"/><circle cx="16" cy="16" r="8.5" fill="#d68a3c"/><circle cx="16" cy="16" r="4" fill="#14130f" stroke="#f2ecdd" stroke-width="1.2"/></svg>
+        <img class="lock-logo" src="https://i.postimg.cc/7ZqG3fCq/Cap-Formula.png" alt="Logo" />
         <div class="lock-title" id="lock-title">Enter PIN</div>
         <div class="lock-sub" id="lock-sub">CapHub is locked</div>
         <div class="lock-error" id="lock-error"></div>
         <div class="lock-dots" id="lock-dots">
             <div class="lock-dot"></div><div class="lock-dot"></div><div class="lock-dot"></div><div class="lock-dot"></div>
         </div>
-        <div class="lock-keypad">
+        <div class="lock-keypad" id="lock-keypad-el">
             <button class="lock-key" onclick="lockKeyPress('1')">1</button>
             <button class="lock-key" onclick="lockKeyPress('2')">2</button>
             <button class="lock-key" onclick="lockKeyPress('3')">3</button>
@@ -938,7 +938,6 @@
             <button class="lock-key" onclick="lockKeyPress('0')">0</button>
             <button class="lock-key" onclick="lockKeyPress('back')" title="Backspace">⌫</button>
         </div>
-        <button class="lock-forgot" id="lock-forgot-btn" onclick="forgotPin()">Forgot PIN?</button>
     </div>
 
     <!-- UPDATE AVAILABLE TOAST -->
@@ -2385,16 +2384,63 @@
             setTimeout(() => { if (el.innerText === msg) el.innerText = ''; }, 1800);
         }
 
+        const MAX_PIN_ATTEMPTS = 5;
+        const PIN_LOCKOUT_MS = 15 * 60 * 1000; // 15 minutes
+        let lockoutInterval = null;
+
+        function getFailedAttempts() { return parseInt(localStorage.getItem('caphub_pin_attempts') || '0', 10); }
+        function getLockoutUntil() { return parseInt(localStorage.getItem('caphub_pin_lockout_until') || '0', 10); }
+        function isLockedOut() { return Date.now() < getLockoutUntil(); }
+        function clearAttemptState() {
+            localStorage.removeItem('caphub_pin_attempts');
+            localStorage.removeItem('caphub_pin_lockout_until');
+        }
+
+        function enterLockoutUI(until) {
+            document.getElementById('lock-title').innerText = 'Too Many Attempts';
+            document.getElementById('lock-sub').classList.add('lockout');
+            document.getElementById('lock-error').innerText = '';
+            document.getElementById('lock-keypad-el').classList.add('disabled');
+
+            const tick = () => {
+                const remaining = until - Date.now();
+                if (remaining <= 0) {
+                    clearInterval(lockoutInterval); lockoutInterval = null;
+                    clearAttemptState();
+                    exitLockoutUI();
+                    return;
+                }
+                const mins = Math.floor(remaining / 60000);
+                const secs = Math.floor((remaining % 60000) / 1000);
+                document.getElementById('lock-sub').innerText = `Try again in ${mins}:${secs.toString().padStart(2, '0')}`;
+            };
+            if (lockoutInterval) clearInterval(lockoutInterval);
+            tick();
+            lockoutInterval = setInterval(tick, 1000);
+        }
+
+        function exitLockoutUI() {
+            document.getElementById('lock-title').innerText = 'Enter PIN';
+            document.getElementById('lock-sub').classList.remove('lockout');
+            document.getElementById('lock-sub').innerText = 'CapHub is locked';
+            document.getElementById('lock-keypad-el').classList.remove('disabled');
+        }
+
         function showLockScreen() {
             lockBuffer = '';
             updateLockDots();
-            document.getElementById('lock-title').innerText = 'Enter PIN';
-            document.getElementById('lock-sub').innerText = 'CapHub is locked';
             document.getElementById('lock-error').innerText = '';
             document.getElementById('lock-screen').classList.add('on');
+            if (isLockedOut()) {
+                enterLockoutUI(getLockoutUntil());
+            } else {
+                exitLockoutUI();
+            }
         }
 
         async function lockKeyPress(key) {
+            if (isLockedOut()) return; // keypad is visually disabled too, but block input regardless
+
             if (key === 'back') {
                 lockBuffer = lockBuffer.slice(0, -1);
                 updateLockDots();
@@ -2406,22 +2452,25 @@
             if (lockBuffer.length < 4) return;
 
             const entered = lockBuffer;
+            lockBuffer = ''; updateLockDots();
             const hash = await hashPin(entered);
+
             if (hash === localStorage.getItem('caphub_pin_hash')) {
+                clearAttemptState();
                 sessionStorage.setItem('caphub_unlocked', '1');
                 document.getElementById('lock-screen').classList.remove('on');
             } else {
-                lockBuffer = ''; updateLockDots();
-                showLockError('Incorrect PIN');
+                const attempts = getFailedAttempts() + 1;
+                localStorage.setItem('caphub_pin_attempts', String(attempts));
+                if (attempts >= MAX_PIN_ATTEMPTS) {
+                    const until = Date.now() + PIN_LOCKOUT_MS;
+                    localStorage.setItem('caphub_pin_lockout_until', String(until));
+                    enterLockoutUI(until);
+                } else {
+                    const left = MAX_PIN_ATTEMPTS - attempts;
+                    showLockError(`Incorrect PIN — ${left} attempt${left === 1 ? '' : 's'} left`);
+                }
             }
-        }
-
-        function forgotPin() {
-            if (!confirm('This unlocks CapHub for now, but it will re-sync and re-lock automatically ' +
-                          'next time this device is online - the PIN is controlled centrally and this ' +
-                          "isn't a permanent bypass. Continue?")) return;
-            sessionStorage.setItem('caphub_unlocked', '1');
-            document.getElementById('lock-screen').classList.remove('on');
         }
 
         function relativeSyncTime() {
@@ -2465,7 +2514,7 @@
         function checkLockOnLoad() {
             const hasPin = !!localStorage.getItem('caphub_pin_hash');
             const unlocked = sessionStorage.getItem('caphub_unlocked') === '1';
-            if (hasPin && !unlocked) showLockScreen();
+            if ((hasPin && !unlocked) || isLockedOut()) showLockScreen();
         }
 
         // --- ENGINE SELF-TEST SUITE ---
