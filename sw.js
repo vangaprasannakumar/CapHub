@@ -2,7 +2,7 @@
 // IMPORTANT: bump CACHE_NAME on every meaningful release. Service workers only re-install when
 // this FILE's bytes change - if CACHE_NAME (or anything else here) doesn't change, browsers won't
 // detect an update at all, and returning users can get stuck on an old cached index.html forever.
-const CACHE_NAME = 'caphub-v2-2026-07-12';
+const CACHE_NAME = 'caphub-v7-2026-09-03';
 const CORE_ASSETS = [
     './index.html',
     './manifest.json'
