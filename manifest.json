@@ -4,8 +4,8 @@
   "description": "Precision winding and potting calculator for manufacturing.",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#14130f",
-  "theme_color": "#14130f",
+  "background_color": "#f6f1e7",
+  "theme_color": "#f6f1e7",
   "orientation": "portrait",
   "icons": [
     {
