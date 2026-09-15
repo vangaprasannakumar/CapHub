@@ -188,6 +188,9 @@
         .input-group { display: flex; flex-direction: column; }
         .input-group.full { grid-column: span 2; }
         label { font-size: 10.5px; font-weight: 700; margin-bottom: 6px; color: var(--dim); text-transform: uppercase; letter-spacing: 0.9px; font-family: var(--font-main); }
+        /* uppercase turns the micro sign into Greek capital Mu, which looks exactly like M -
+           so µm would render as MM. Units opt out of the transform. */
+        label .u, .wd-stats label .u, .results-header .u { text-transform: none; }
         input, select { width: 100%; padding: 12px 16px; font-size: 15px; font-family: var(--font-mono); font-weight: 500; font-variant-numeric: tabular-nums; background: var(--input-bg); border: 1px solid var(--input-border); border-radius: 10px; color: var(--text); transition: all 0.2s var(--ease); outline: none; }
         select { font-family: var(--font-main); font-weight: 600; }
         input::placeholder { color: var(--muted); opacity: 0.7; font-weight: 500; }
@@ -300,7 +303,7 @@
         .set-sec-label:first-child { margin-top: 0; }
         .set-group { background: var(--accent-bg); border-radius: 16px; overflow: hidden; }
         .set-row { display: flex; align-items: center; gap: 14px; padding: 16px 16px; width: 100%; background: transparent; border: none; text-align: left; color: var(--text); font-family: var(--font-main); }
-        .set-row + .set-row, .set-stack + .set-row, .set-row + .set-stack { border-top: 1px solid var(--border); }
+        .set-row + .set-row, .set-stack + .set-row { border-top: 1px solid var(--border); }
         button.set-row { cursor: pointer; transition: background 0.15s var(--ease); }
         button.set-row:hover, button.set-row:active { background: var(--accent-bg); }
         .set-ico { width: 42px; height: 42px; border-radius: 12px; background: var(--surface); color: var(--accent); display: flex; align-items: center; justify-content: center; flex: 0 0 auto; }
@@ -310,6 +313,12 @@
         .set-txt span { display: block; font-size: 13px; color: var(--muted); margin-top: 2px; line-height: 1.35; }
         .set-chev { color: var(--muted); flex: 0 0 auto; }
         .set-val { font-family: var(--font-mono); font-size: 15px; color: var(--muted); flex: 0 0 auto; }
+        /* Rows with no icon used to start their text at the row padding while icon rows started
+           72px in, leaving the About block visibly ragged. Plain rows now share one label column. */
+        .set-row.plain { padding-top: 13px; padding-bottom: 13px; }
+        .set-row.plain .set-txt b { font-size: 14.5px; }
+        .set-note { padding: 0 16px 16px; font-size: 12.5px; line-height: 1.6; color: var(--muted); }
+        .set-val.name { font-family: var(--font-main); font-weight: 600; color: var(--text); }
         .set-stack { padding: 0 16px 16px; }
         .set-seg { display: grid; grid-template-columns: repeat(auto-fit, minmax(72px, 1fr)); background: var(--surface); border-radius: 12px; padding: 5px; gap: 4px; }
         [data-theme="light"] .set-seg { background: #fff; }
@@ -322,7 +331,7 @@
         .set-step button:hover:not(:disabled) { background: var(--accent-bg); }
         .set-step button:disabled { opacity: 0.3; cursor: not-allowed; }
         .set-step span { flex: 1; text-align: center; font-family: var(--font-mono); font-size: 17px; font-weight: 600; font-variant-numeric: tabular-nums; }
-        .set-about-logo { width: 52px; height: 52px; border-radius: 14px; object-fit: cover; background: var(--surface); flex: 0 0 auto; }
+        .set-about-logo { width: 42px; height: 42px; border-radius: 12px; object-fit: cover; background: var(--surface); flex: 0 0 auto; }
 
         #diag-overlay, #hist-overlay, #lock-settings-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index: 2000; align-items: center; justify-content: center; padding: 20px; }
         #diag-overlay.on, #hist-overlay.on, #lock-settings-overlay.on { display: flex; animation: overlayIn 0.2s var(--ease); }
@@ -360,11 +369,14 @@
         .lock-key.lock-key-ghost { visibility: hidden; }
         .lock-keypad.disabled { opacity: 0.3; pointer-events: none; filter: grayscale(0.6); }
         .lock-sub.lockout { color: var(--danger); font-weight: 700; font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
-        .lock-info { max-width: 330px; margin: 22px auto 0; text-align: center; }
+        .lock-key.kb { background: var(--accent); color: #fff; transform: scale(0.94); }
+        [data-theme="dark"] .lock-key.kb { color: #1a1206; }
+        .lock-info { max-width: 380px; margin: 22px auto 0; text-align: center; }
         .lock-info p { font-size: 11.5px; line-height: 1.6; color: var(--dim); margin-bottom: 9px; }
         .lock-info p:last-child { margin-bottom: 0; }
         .lock-info-contact { padding-top: 9px; border-top: 1px solid var(--border); }
-        .lock-info a { color: var(--accent); text-decoration: none; font-weight: 700; word-break: break-all; }
+        .lock-info a { color: var(--accent); text-decoration: none; font-weight: 700; overflow-wrap: break-word; white-space: nowrap; }
+        .lock-info-contact { display: block; }
         @media (max-height: 700px) { .lock-info p:not(.lock-info-contact) { display: none; } .lock-info { margin-top: 16px; } }
 
         .lock-settings-row { display: flex; justify-content: space-between; align-items: center; padding: 14px 0; border-bottom: 1px solid var(--border); }
@@ -647,7 +659,7 @@
                             <div class="input-group"><label>Target MFD</label><input type="number" id="m1_mfd" value="2.5" step="0.1" oninput="calculateM1()"></div>
                             <div class="input-group"><label>Pos Tol %</label><input type="number" id="m1_posTol" value="0" step="0.1" oninput="calculateM1()"></div>
                             <div class="input-group full"><label>Fin. MFD</label><input type="number" id="m1_finMfd" value="" readonly class="readonly-field"></div>
-                            <div class="input-group"><label>Thickness (µm)</label><input type="number" id="m1_thick" value="6" step="0.1" oninput="calculateM1()"></div>
+                            <div class="input-group"><label>Thickness (<span class="u">µm</span>)</label><input type="number" id="m1_thick" value="6" step="0.1" oninput="calculateM1()"></div>
                             <div class="input-group"><label>Width (mm)</label><input type="number" id="m1_width" value="30" step="0.1" oninput="calculateM1()"></div>
                             <div class="input-group"><label>Free Margin (mm)</label><input type="number" id="m1_margin" value="1.5" step="0.1" oninput="calculateM1()"></div>
                             <div class="input-group"><label>Offset (mm)</label><input type="number" id="m1_offset" value="1" step="0.1" oninput="calculateM1()"></div>
@@ -750,7 +762,7 @@
                         <div class="card-title">INPUT - µF to kVAr</div>
                         <div class="input-grid">
                             <div class="input-group full"><label>Enter Frequency (Hz)</label><input type="number" id="m2_freq2" value="50" step="1" oninput="calculateM2_Right()"></div>
-                            <div class="input-group"><label id="lbl_mfd_total">Enter 3-Φ Total µF</label><input type="number" id="m2_mfdIn" value="9.24" step="0.01" oninput="calculateM2_Right()"></div>
+                            <div class="input-group"><label id="lbl_mfd_total">Enter 3-Φ Total <span class="u">µF</span></label><input type="number" id="m2_mfdIn" value="9.24" step="0.01" oninput="calculateM2_Right()"></div>
                             <div class="input-group"><label>Enter Volts</label><input type="number" id="m2_vout" value="440" step="1" oninput="calculateM2_Right()"></div>
                         </div>
                         <button class="btn btn-alt btn-force" data-req="m2_freq2 m2_mfdIn m2_vout" onclick="calculateM2_Right()">Force Calculate</button>
@@ -765,7 +777,7 @@
                             <div class="input-group"><label>MFD (Drawing)</label><input type="number" id="m2_w_mfd" value="6.16" step="0.01" oninput="calculateM2Winding()"></div>
                             <div class="input-group"><label>Pos Tol %</label><input type="number" id="m2_w_posTol" value="0" step="0.1" oninput="calculateM2Winding()"></div>
                             <div class="input-group"><label>Fin. MFD</label><input type="number" id="m2_w_finMfd" value="" readonly class="readonly-field"></div>
-                            <div class="input-group"><label>Thickness (µm)</label><input type="number" id="m2_w_thick" value="6" step="0.1" oninput="calculateM2Winding()"></div>
+                            <div class="input-group"><label>Thickness (<span class="u">µm</span>)</label><input type="number" id="m2_w_thick" value="6" step="0.1" oninput="calculateM2Winding()"></div>
                             <div class="input-group"><label>Width (mm)</label><input type="number" id="m2_w_width" value="37.5" step="0.1" oninput="calculateM2Winding()"></div>
                             <div class="input-group"><label>Core OD (mm)</label><input type="number" id="m2_w_coreOd" value="9" step="0.1" oninput="calculateM2Winding()"></div>
                             <div class="input-group"><label>Wt of Core (g)</label><input type="number" id="m2_w_coreWt" value="1" step="0.1" oninput="calculateM2Winding()"></div>
@@ -811,7 +823,7 @@
                             <div class="input-group"><label>Core OD (mm)</label><input type="number" id="m3_coreOd" value="9" step="0.1" oninput="calculateM3()"></div>
                             <div class="input-group"><label>Fin. MFD 1</label><input type="number" id="m3_finMfd1" value="" readonly class="readonly-field"></div>
                             <div class="input-group"><label>Fin. MFD 2</label><input type="number" id="m3_finMfd2" value="" readonly class="readonly-field"></div>
-                            <div class="input-group"><label>Thickness (µm)</label><input type="number" id="m3_thick" value="4.9" step="0.1" oninput="calculateM3()"></div>
+                            <div class="input-group"><label>Thickness (<span class="u">µm</span>)</label><input type="number" id="m3_thick" value="4.9" step="0.1" oninput="calculateM3()"></div>
                             <div class="input-group"><label>Width (mm)</label><input type="number" id="m3_width" value="75" step="0.1" oninput="calculateM3()"></div>
                             <div class="input-group"><label>Free Margin (mm)</label><input type="number" id="m3_margin" value="2" step="0.1" oninput="calculateM3()"></div>
                             <div class="input-group"><label>Offset (mm)</label><input type="number" id="m3_offset" value="1" step="0.1" oninput="calculateM3()"></div>
@@ -865,7 +877,7 @@
                                 <div class="input-group"><label>MFD 2 (Middle)</label><input type="number" id="m4_mfd2" value="5" step="0.1" oninput="calculateTCW_MFD()"></div>
                                 <div class="input-group"><label>MFD 3 (Outer)</label><input type="number" id="m4_mfd3" value="7.5" step="0.1" oninput="calculateTCW_MFD()"></div>
                                 <div class="input-group"><label>Pos Tol %</label><input type="number" id="m4_posTol" value="0" step="0.1" oninput="calculateTCW_MFD()"></div>
-                                <div class="input-group"><label>Thickness (µm)</label><input type="number" id="m4_thick" value="5.9" step="0.1" oninput="calculateTCW_MFD()"></div>
+                                <div class="input-group"><label>Thickness (<span class="u">µm</span>)</label><input type="number" id="m4_thick" value="5.9" step="0.1" oninput="calculateTCW_MFD()"></div>
                                 <div class="input-group"><label>Width (mm)</label><input type="number" id="m4_width" value="37.5" step="0.1" oninput="calculateTCW_MFD()"></div>
                                 <div class="input-group"><label>Free Margin (mm)</label><input type="number" id="m4_margin" value="2.5" step="0.1" oninput="calculateTCW_MFD()"></div>
                                 <div class="input-group"><label>Offset (mm)</label><input type="number" id="m4_offset" value="1" step="0.1" oninput="calculateTCW_MFD()"></div>
@@ -917,7 +929,7 @@
                             <div class="card alt-card">
                                 <div class="card-title">INPUT - µF to kVAr</div>
                                 <div class="input-grid">
-                                    <div class="input-group full"><label>Enter 3-Φ Total µF</label><input type="number" id="m5_mfdIn" value="9.24" step="0.01" oninput="calculateM5_Right()"></div>
+                                    <div class="input-group full"><label>Enter 3-Φ Total <span class="u">µF</span></label><input type="number" id="m5_mfdIn" value="9.24" step="0.01" oninput="calculateM5_Right()"></div>
                                     <div class="input-group"><label>Volts</label><input type="number" id="m5_vout" value="440" step="1" oninput="calculateM5_Right()"></div>
                                     <div class="input-group"><label>Freq (Hz)</label><input type="number" id="m5_freq2" value="50" step="1" oninput="calculateM5_Right()"></div>
                                 </div>
@@ -933,7 +945,7 @@
                                 <div class="input-group full"><label>MFD per Phase (from above)</label><input type="number" id="m5_w_mfd" value="12.5" step="0.01" oninput="calculateTCW_KVAR()"></div>
                                 <div class="input-group"><label>Pos Tol %</label><input type="number" id="m5_w_posTol" value="0" step="0.1" oninput="calculateTCW_KVAR()"></div>
                                 <div class="input-group"><label>Core OD (mm)</label><input type="number" id="m5_w_coreOd" value="9" step="0.1" oninput="calculateTCW_KVAR()"></div>
-                                <div class="input-group"><label>Thickness (µm)</label><input type="number" id="m5_w_thick" value="7.8" step="0.1" oninput="calculateTCW_KVAR()"></div>
+                                <div class="input-group"><label>Thickness (<span class="u">µm</span>)</label><input type="number" id="m5_w_thick" value="7.8" step="0.1" oninput="calculateTCW_KVAR()"></div>
                                 <div class="input-group"><label>Width (mm)</label><input type="number" id="m5_w_width" value="75" step="0.1" oninput="calculateTCW_KVAR()"></div>
                                 <div class="input-group"><label>Free Margin (mm)</label><input type="number" id="m5_w_margin" value="2" step="0.1" oninput="calculateTCW_KVAR()"></div>
                                 <div class="input-group"><label>Offset (mm)</label><input type="number" id="m5_w_offset" value="1" step="0.1" oninput="calculateTCW_KVAR()"></div>
@@ -976,7 +988,7 @@
                             <div class="input-group"><label>Target MFD</label><input type="number" id="f_mfd" value="8" step="0.1" oninput="calculateFlat()"></div>
                             <div class="input-group"><label>Pos Tol %</label><input type="number" id="f_posTol" value="0" step="0.1" oninput="calculateFlat()"></div>
                             <div class="input-group full"><label>Fin. MFD</label><input type="number" id="f_finMfd" value="" readonly class="readonly-field"></div>
-                            <div class="input-group"><label>Thickness (µm)</label><input type="number" id="f_thick" value="5.9" step="0.1" oninput="calculateFlat()"></div>
+                            <div class="input-group"><label>Thickness (<span class="u">µm</span>)</label><input type="number" id="f_thick" value="5.9" step="0.1" oninput="calculateFlat()"></div>
                             <div class="input-group"><label>Width (mm)</label><input type="number" id="f_width" value="37.5" step="0.1" oninput="calculateFlat()"></div>
                             <div class="input-group"><label>Free Margin (mm)</label><input type="number" id="f_margin" value="1.5" step="0.1" oninput="calculateFlat()"></div>
                             <div class="input-group"><label>Offset (mm)</label><input type="number" id="f_offset" value="1" step="0.1" oninput="calculateFlat()"></div>
@@ -1091,7 +1103,7 @@
                         <div class="input-grid">
                             <div class="input-group" id="rs_kvar_wrap"><label>Rating (kVAr)</label><input type="number" id="rs_kvar" value="1" step="0.1" oninput="calculateResistor()"></div>
                             <div class="input-group" id="rs_freq_wrap"><label>Frequency (Hz)</label><input type="number" id="rs_freq" value="50" step="1" oninput="calculateResistor()"></div>
-                            <div class="input-group full" id="rs_mfdin_wrap"><label>3-Φ Total Capacitance (µF)</label><input type="number" id="rs_mfdIn" value="9.24" step="0.01" oninput="calculateResistor()"></div>
+                            <div class="input-group full" id="rs_mfdin_wrap"><label>3-Φ Total Capacitance (<span class="u">µF</span>)</label><input type="number" id="rs_mfdIn" value="9.24" step="0.01" oninput="calculateResistor()"></div>
                             <div class="input-group"><label>Voltage (V AC)</label><input type="number" id="rs_volts" value="415" step="1" oninput="calculateResistor()"></div>
                             <div class="input-group"><label>Discharge Time (s)</label><input type="number" id="rs_time" value="45" step="1" oninput="calculateResistor()"></div>
                             <div class="input-group full"><label>Wattage Safety Factor (×)</label><input type="number" id="rs_factor" value="2" step="0.1" oninput="calculateResistor()"></div>
@@ -1228,9 +1240,14 @@
                         <div class="set-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg></div>
                         <div class="set-txt"><b>Backup Data</b><span>Save calculation history as a JSON file</span></div>
                     </button>
-                    <button class="set-row" onclick="triggerRestore()">
+                    <button class="set-row" onclick="triggerRestore()" id="set-restore-row">
                         <div class="set-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg></div>
                         <div class="set-txt"><b>Restore Data</b><span>Load history from a backup JSON file</span></div>
+                    </button>
+                    <button class="set-row" onclick="resetApp()">
+                        <div class="set-ico" style="color:var(--danger)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><path d="M3 2v6h6"></path><path d="M3.51 15a9 9 0 1 0 2.13-9.36L3 8"></path></svg></div>
+                        <div class="set-txt"><b style="color:var(--danger)">Reset App</b><span>Clear history, inputs and preferences</span></div>
+                        <svg class="set-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><polyline points="9 18 15 12 9 6"></polyline></svg>
                     </button>
                 </div>
 
@@ -1275,20 +1292,18 @@
                         <img class="set-about-logo" src="https://i.postimg.cc/7ZqG3fCq/Cap-Formula.png" alt="CapHub" />
                         <div class="set-txt"><b>CapHub</b><span>Precision Winding &amp; Potting Calculator</span></div>
                     </div>
-                    <div class="set-row">
-                        <div class="set-txt" style="padding-left:2px;"><span style="margin:0; line-height:1.6;">Element winding geometry, potting recipes, kVAr conversion, concentric windings, zinc consumption and discharge resistor sizing for MPP film capacitors. Every formula is matched cell-by-cell to the validated production workbook — see the Formula Book for the full derivation of each one.</span></div>
-                    </div>
-                    <div class="set-row">
-                        <div class="set-txt"><b style="font-weight:700;">Version</b></div>
+                    <div class="set-note">Element winding geometry, potting recipes, kVAr conversion, concentric windings, zinc consumption and discharge resistor sizing for MPP film capacitors. Every formula is matched cell-by-cell to the validated production workbook — see the Formula Book for the derivation of each one.</div>
+                    <div class="set-row plain">
+                        <div class="set-txt"><b>Version</b></div>
                         <span class="set-val" id="set-version">—</span>
                     </div>
-                    <div class="set-row">
-                        <div class="set-txt"><b style="font-weight:700;">Developer</b></div>
-                        <span class="set-val" style="font-family:var(--font-main); font-weight:600; color:var(--text);">Vanga Prasanna Kumar</span>
+                    <div class="set-row plain">
+                        <div class="set-txt"><b>Developer</b></div>
+                        <span class="set-val name">Vanga Prasanna Kumar</span>
                     </div>
-                    <a class="set-row" href="mailto:vangaprasannakumar@gmail.com?subject=CapHub%20Feedback" style="text-decoration:none;">
-                        <div class="set-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><rect x="2" y="4" width="20" height="16" rx="2"></rect><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path></svg></div>
-                        <div class="set-txt"><b>Contact</b><span>vangaprasannakumar@gmail.com</span></div>
+                    <a class="set-row plain" href="mailto:vangaprasannakumar@gmail.com?subject=CapHub%20Feedback" style="text-decoration:none;">
+                        <div class="set-txt"><b>Contact</b></div>
+                        <span class="set-val name" style="color:var(--accent);">vangaprasannakumar@gmail.com</span>
                         <svg class="set-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><polyline points="9 18 15 12 9 6"></polyline></svg>
                     </a>
                 </div>
@@ -1375,6 +1390,7 @@
         <div class="lock-info" id="lock-info">
             <p>This 4-digit PIN keeps CapHub from being opened by accident on a shared floor device. It is not a security lock — it protects against stray taps, not against anyone determined to get in.</p>
             <p>The PIN is set centrally and syncs to this device on load, so the same code works everywhere. Nothing you calculate is sent anywhere; history and settings stay in this browser.</p>
+            <p>Type it on the keypad or straight from your keyboard — number keys and Backspace both work.</p>
             <p class="lock-info-contact">Forgotten the PIN, or need it changed? Contact <a href="mailto:vangaprasannakumar@gmail.com?subject=CapHub%20PIN">vangaprasannakumar@gmail.com</a></p>
         </div>
         <div class="lock-error" id="lock-error"></div>
@@ -1482,7 +1498,7 @@
     <!-- ============================================== -->
     <script>
         // --- THEME LOGIC ---
-        const APP_VERSION = '2.0';
+        const APP_VERSION = '2.1';
 
         // --- THEME (light / dark / system) ---
         // 'system' follows the OS preference live; the other two pin it. Stored values from the
@@ -2176,6 +2192,111 @@
             showInstallPrompt(true); // iOS: no native prompt exists, so show the manual steps
         }
 
+        // --- WORKING STATE PERSISTENCE ---
+        // History already survived a restart, but the inputs on screen did not - closing the app
+        // dropped you back to defaults mid-job. Every field in TAB_FIELD_MAP is mirrored to
+        // localStorage on change and restored on load, along with the tab you were last on.
+        const STATE_KEY = 'caphub_state_v1';
+        let stateSaveTimer = null;
+
+        const MATRIX_IN = ['mat-mfd','mat-tol','mat-thick','mat-width','mat-margin','mat-offset','mat-coreOd','mat-coreWt','mat-covTurns'];
+
+        function collectMatrix() {
+            return [...document.querySelectorAll('#matrixBody tr')].map(tr =>
+                MATRIX_IN.map(c => { const el = tr.querySelector('.' + c); return el ? el.value : ''; })
+            );
+        }
+
+        function restoreMatrix(rows) {
+            const tbody = document.getElementById('matrixBody');
+            if (!tbody || !Array.isArray(rows) || !rows.length) return false;
+            tbody.innerHTML = '';
+            rows.forEach(vals => {
+                addMatrixRow();
+                const tr = tbody.lastElementChild;
+                MATRIX_IN.forEach((c, i) => {
+                    const el = tr.querySelector('.' + c);
+                    if (el && vals[i] !== undefined) el.value = vals[i];
+                });
+                calcMatrixRow(tr.querySelector('.mat-mfd'));
+            });
+            return true;
+        }
+
+        function collectState() {
+            const fields = {};
+            Object.keys(TAB_FIELD_MAP).forEach(tab => {
+                TAB_FIELD_MAP[tab].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) fields[id] = el.value;
+                });
+            });
+            // Inputs outside the ticket field map that still carry real work.
+            ['m2_kvar','m2_volts','m2_freq','m2_phase','m2_mfdIn','m2_voltsIn','m2_freqIn',
+             'm5_kvar','m5_volts','m5_freq','m5_phase','m1_eleQty'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) fields[id] = el.value;
+            });
+            return { v: 1, saved: Date.now(), tab: activeTab || 'formula', fields, matrix: collectMatrix() };
+        }
+
+        function saveState() {
+            try { localStorage.setItem(STATE_KEY, JSON.stringify(collectState())); }
+            catch (e) { /* quota or private mode - working state is a convenience, never load-bearing */ }
+        }
+
+        // Typing fires on every keystroke; coalesce so we write once the operator pauses.
+        function scheduleSaveState() {
+            clearTimeout(stateSaveTimer);
+            stateSaveTimer = setTimeout(saveState, 400);
+        }
+
+        function restoreState() {
+            let st;
+            try { st = JSON.parse(localStorage.getItem(STATE_KEY)); } catch (e) { return null; }
+            if (!st || !st.fields) return null;
+            Object.keys(st.fields).forEach(id => {
+                const el = document.getElementById(id);
+                // Fields added in a later version simply keep their default - a saved state from
+                // an older build must never blank out inputs it has never heard of.
+                if (el && st.fields[id] !== undefined && st.fields[id] !== null) el.value = st.fields[id];
+            });
+            return st;
+        }
+
+        function initStatePersistence() {
+            const st = restoreState();
+            // One delegated listener beats wiring hundreds of inputs, and it catches select
+            // changes and history restores too.
+            document.addEventListener('input', e => {
+                if (e.target && e.target.closest && e.target.closest('.main-scroll')) scheduleSaveState();
+            });
+            document.addEventListener('change', e => {
+                if (e.target && e.target.closest && e.target.closest('.main-scroll')) scheduleSaveState();
+            });
+            // A phone can be killed without ever firing unload; visibilitychange is the reliable one.
+            document.addEventListener('visibilitychange', () => { if (document.hidden) saveState(); });
+            window.addEventListener('pagehide', saveState);
+            return st;
+        }
+
+        // --- RESET APP ---
+        function resetApp() {
+            const hist = loadHistory().length;
+            const msg = 'Reset CapHub?\n\n'
+                + 'This clears:\n'
+                + '  \u2022 all ' + hist + ' saved calculation' + (hist === 1 ? '' : 's')
+                + '\n  \u2022 the inputs currently on every tab'
+                + '\n  \u2022 theme, zoom and guide preferences'
+                + '\n\nThe app lock PIN is not affected. This cannot be undone.';
+            if (!confirm(msg)) return;
+            if (hist > 0 && confirm('Save a backup of those ' + hist + ' calculations first?')) backupData();
+            [STATE_KEY, HISTORY_KEY, THEME_KEY, ZOOM_KEY, GUIDE_KEY, INSTALL_KEY, INSTALL_BAR_KEY].forEach(k => {
+                try { localStorage.removeItem(k); } catch (e) {}
+            });
+            location.reload();
+        }
+
         // --- FIRST-RUN QUICK GUIDE ---
         const GUIDE_KEY = 'caphub_guide_seen';
         const GUIDE_ICO = {
@@ -2241,6 +2362,40 @@
             return !!g && g.classList.contains('on');
         }
 
+        // The PIN pad was tap-only. On a desktop the keyboard is the obvious way in, and there
+        // is no input element to focus, so the listener is bound at the document level and gated
+        // on the lock screen actually being visible.
+        function lockScreenVisible() {
+            const el = document.getElementById('lock-screen');
+            return !!el && el.classList.contains('on');
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (!lockScreenVisible()) return;
+            if (e.ctrlKey || e.metaKey || e.altKey) return;
+            if (e.key >= '0' && e.key <= '9') {
+                e.preventDefault();
+                lockKeyPress(e.key);
+                lockFlashKey(e.key);
+            } else if (e.key === 'Backspace' || e.key === 'Delete') {
+                e.preventDefault();
+                lockKeyPress('back');
+                lockFlashKey('back');
+            }
+        });
+
+        // Gives keyboard entry the same visual feedback a tap gets, so it is obvious the digit
+        // registered on a screen with no cursor and no input field.
+        function lockFlashKey(key) {
+            const pad = document.getElementById('lock-keypad-el');
+            if (!pad) return;
+            const want = key === 'back' ? "lockKeyPress('back')" : `lockKeyPress('${key}')`;
+            const btn = [...pad.querySelectorAll('.lock-key')].find(b => (b.getAttribute('onclick') || '') === want);
+            if (!btn) return;
+            btn.classList.add('kb');
+            setTimeout(() => btn.classList.remove('kb'), 140);
+        }
+
         function initGuide() {
             if (localStorage.getItem(GUIDE_KEY)) return;
             const lock = document.getElementById('lock-screen');
@@ -2303,7 +2458,11 @@
         }
 
         // --- NAVIGATION LOGIC ---
+        let activeTab = 'formula';
+
         function navTo(t) {
+            activeTab = t;
+            if (typeof scheduleSaveState === 'function') scheduleSaveState();
             document.querySelectorAll('.view').forEach(v => v.classList.remove('on'));
             document.querySelectorAll('.ni').forEach(n => n.classList.remove('on'));
             document.querySelectorAll('.sb-item').forEach(s => s.classList.remove('on'));
@@ -2349,7 +2508,7 @@
 
         function updatePhaseLabels() {
             const phase = parseInt(document.getElementById('m2_phase').value) || 3;
-            document.getElementById('lbl_mfd_total').innerText = phase === 3 ? "Enter 3-Φ Total µF" : "Enter 1-Φ Total µF";
+            document.getElementById('lbl_mfd_total').innerHTML = phase === 3 ? 'Enter 3-\u03A6 Total <span class="u">\u00B5F</span>' : 'Enter 1-\u03A6 Total <span class="u">\u00B5F</span>';
             document.getElementById('lbl_kvar_out').innerText = phase === 3 ? "3-Φ Total Power (kVAr)" : "1-Φ Total Power (kVAr)";
         }
 
@@ -4347,6 +4506,9 @@
             initZoom();
             initInstallPrompt();
             initGuide();
+            // Restore before any calculate() runs, so the engines read the operator's saved
+            // inputs rather than computing the defaults and being overwritten afterwards.
+            const savedState = initStatePersistence();
             updatePhaseLabels(); 
             calculateM1(); 
             calculateM2_Left(); 
@@ -4362,7 +4524,8 @@
             calculateFlat();
             calculateSpray();
             calculateResistor();
-            initMatrix();
+            if (!(savedState && restoreMatrix(savedState.matrix))) initMatrix();
+            if (savedState && savedState.tab && document.getElementById('view-' + savedState.tab)) navTo(savedState.tab);
         };
     </script>
 </body>
