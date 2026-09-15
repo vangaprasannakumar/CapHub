@@ -55,7 +55,7 @@ Both figures print on the production ticket. Cutting each reel to the *total* is
 - **Calculation History** — every "Force Calc" or ticket print is snapshotted locally; restore or delete past runs, or export the log as CSV. (Stored in browser `localStorage` — it's per-device, not synced across your phone/desktop.)
 - **Cross-tab carry-over** — push Cap Formula's winding parameters (thickness, width, margin, offset, core OD, cover turns) straight into DCW, TCW, or Flat Elements instead of retyping them. Every winding module can also push its computed element diameters straight into Spray & Zinc.
 - **Production tickets** — print-to-PDF travelers with a letterhead, unique ticket ID, the winding diagram (Cap Formula), and a Prepared/Checked/Approved signoff block. Laid out to fit one A4 page.
-- **App Lock** — an optional 4-digit PIN gate, with the hash synced from a Google Apps Script endpoint. This is a casual-access gate for shared shop-floor devices, **not** a security boundary: it runs entirely client-side, and a 4-digit PIN with a known salt is trivially brute-forced by anyone holding the hash. Treat it as a "don't wander in here by accident" lock. The PIN screen itself now says as much, alongside a note that nothing calculated leaves the device and a contact address for a forgotten PIN.
+- **App Lock** — an optional 4-digit PIN gate, enterable from the keypad **or the keyboard** (number keys and Backspace/Delete, with the matching key flashing so entry is visible on a screen with no cursor), with the hash synced from a Google Apps Script endpoint. This is a casual-access gate for shared shop-floor devices, **not** a security boundary: it runs entirely client-side, and a 4-digit PIN with a known salt is trivially brute-forced by anyone holding the hash. Treat it as a "don't wander in here by accident" lock. The PIN screen itself now says as much, alongside a note that nothing calculated leaves the device and a contact address for a forgotten PIN.
 - **Engine Self-Test** — a built-in diagnostic that re-validates the calculation engine against hand-verified values from the source workbooks. Run it after any future edit to the formulas.
 
 ---
@@ -67,6 +67,7 @@ Reached from the gear in the top right.
 - **Theme** — Light, Dark, System, or **Glass**. System follows the OS preference live. Glass is an iOS-style frosted treatment: translucent panels at 24px blur with 180% saturation over a warm aurora backdrop, so the blur has something to pick up.
 - **Zoom** — 80% to 200% in 10% steps. Scales the **calculator body only**; the header and bottom nav stay fixed. Implemented as a single CSS `zoom` on the scroll container, which the header and nav are siblings of rather than children — so they are structurally incapable of scaling. The nav clearance is divided by the zoom factor so the gap stays visually constant at every level. Requires CSS `zoom` support (Chrome, Safari, Firefox 126+); where it's missing the control hides itself rather than sitting there doing nothing.
 - **Backup / Restore Data** — writes `caphub_backup_YYYY-MM-DD.json` stamped with app and version. Restore accepts either a full backup object or a bare history array, rejects malformed JSON, files with no history, and files with no readable entries, and confirms with both counts before replacing.
+- **Reset App** — clears history, the inputs on every tab, and theme/zoom/guide preferences. Confirms twice and offers a backup first. The app lock PIN is deliberately left alone.
 - **Quick Guide** — the first-run tour of what sits on each tab, reopenable at any time.
 - **Formula Book** — see below.
 - **Calculation History**, **Engine Self-Test**, **App Lock** and **Install App** all live here too.
@@ -92,6 +93,16 @@ Both use the same two paths, because Android and iOS are genuinely different:
 - **iOS Safari** has no such event and never will, so the Install button would be a dead control. It is hidden and manual Share → Add to Home Screen steps are shown instead.
 
 Suppressed when already installed, when already answered, and while the PIN screen is up (it would cover the only way in) — re-offered shortly after unlock. iPadOS 13+ reports a desktop Mac UA, so detection also checks touch points. Dismissing is remembered; the **Install App** row in Settings re-offers it, since these are shared devices and the first person to see the prompt may not be the one who wants it.
+
+---
+
+## Working state
+
+Calculation history has always survived a restart. As of 2.1 the **inputs themselves do too** — every field on every tab, the matrix rows, and the tab you were last on are mirrored to `localStorage` as you type (coalesced, so it writes once you pause) and restored on load, before any calculation runs.
+
+Closing the app mid-job and reopening it puts you back exactly where you were. Fields a saved state has never heard of keep their defaults, so an old save can never blank out inputs added in a later version, and a corrupt save is ignored rather than fatal.
+
+Settings → **Reset App** clears it, along with history and preferences.
 
 ---
 
@@ -168,6 +179,13 @@ Summarized from the engineering passes this app went through — kept here as a 
 - Expanded Settings → About with a description, developer and contact address
 - Added an explanation of what the App Lock is and isn't to the PIN screen
 
+**Version 2.1:**
+- **Fixed a unit-display bug worth knowing about.** CSS `text-transform: uppercase` maps the micro sign (U+00B5) to Greek capital Mu (U+039C), which renders identically to `M` — so every `Thickness (µm)` label was displaying as `THICKNESS (MM)`, a micrometre input reading as millimetres. Units now opt out of the transform. The kVAr phase label is rewritten at runtime, so that had to be fixed in the JS as well as the markup.
+- Working state now persists across a restart (see above), and **Reset App** was added to clear it
+- PIN can be entered from the keyboard
+- Settings alignment: removed the divider that appeared between a row and its own control, put the About rows on one shared label column, and matched the app logo to the 42px icon column
+- PIN screen contact address no longer breaks mid-word
+
 ---
 
 ## Known gaps
@@ -177,6 +195,7 @@ Worth knowing about before the next round of work:
 - **Input validation is uneven.** Spray & Zinc and Discharge Resistor guard their inputs; the five original winding modules do not. A negative film thickness produces negative length and turns but still prints a plausible-looking element weight, and a target of `0 µF` renders SA/MFD as `Infinity` — both of which reach the printed ticket.
 - **The app icon is hotlinked** from a third-party image host rather than committed here. The service worker caches it opportunistically after a first online load, but a first-ever offline load shows no logo, and manifest icon availability depends on that host staying up.
 - **History has no filter.** With eight modules feeding a 50-entry cap, it fills quickly and can only be scrolled.
+- **Matrix persistence is by position.** Restoring rebuilds the rows in order; it does not try to reconcile a saved layout against a changed column set.
 
 ---
 
